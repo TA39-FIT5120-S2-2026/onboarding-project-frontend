@@ -1,0 +1,11 @@
+{
+  "sensorId": null,
+  "sensorName": "Docklands Library",
+  "generatedAt": "2026-08-07T14:00:00+10:00",
+  "windowMinutes": 60,
+  "basis": "historical",
+  "sufficientHistory": false,
+  "timeline": [],
+  "peakBand": null,
+  "peakWindow": null
+}

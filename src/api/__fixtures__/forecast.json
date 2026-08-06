@@ -1,0 +1,16 @@
+{
+  "sensorId": 34,
+  "sensorName": "Swanston St North",
+  "generatedAt": "2026-08-07T14:00:00+10:00",
+  "windowMinutes": 60,
+  "basis": "historical",
+  "sufficientHistory": true,
+  "timeline": [
+    { "minutesAhead": 15, "predictedCount": 92, "band": "MEDIUM" },
+    { "minutesAhead": 30, "predictedCount": 164, "band": "HIGH" },
+    { "minutesAhead": 45, "predictedCount": 171, "band": "HIGH" },
+    { "minutesAhead": 60, "predictedCount": 130, "band": "MEDIUM" }
+  ],
+  "peakBand": "HIGH",
+  "peakWindow": "14:30-14:45"
+}

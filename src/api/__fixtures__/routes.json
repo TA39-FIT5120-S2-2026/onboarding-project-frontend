@@ -1,0 +1,59 @@
+{
+  "routes": [
+    {
+      "id": "r1",
+      "walkingTimeMinutes": 10,
+      "distanceMetres": 700,
+      "averageCountPerMinute": 38,
+      "band": "LOW",
+      "recommended": true,
+      "reason": "Lowest pedestrian exposure of the available routes",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [144.9631, -37.8136],
+          [144.9648, -37.8118],
+          [144.9671, -37.8109]
+        ]
+      }
+    },
+    {
+      "id": "r2",
+      "walkingTimeMinutes": 8,
+      "distanceMetres": 500,
+      "averageCountPerMinute": 54,
+      "band": "MEDIUM",
+      "recommended": false,
+      "reason": "Slightly shorter, moderate pedestrian exposure",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [144.9631, -37.8136],
+          [144.9652, -37.8098],
+          [144.9671, -37.8109]
+        ]
+      }
+    },
+    {
+      "id": "r3",
+      "walkingTimeMinutes": 9,
+      "distanceMetres": 600,
+      "averageCountPerMinute": 162,
+      "band": "HIGH",
+      "recommended": false,
+      "reason": "Busiest of the available routes",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [144.9631, -37.8136],
+          [144.9666, -37.8154],
+          [144.9671, -37.8109]
+        ]
+      }
+    }
+  ],
+  "accessPoints": {
+    "origin": { "name": "Melbourne Central", "mode": "train", "distanceMetres": 120 },
+    "destination": { "name": "Bourke St Mall", "mode": "tram", "distanceMetres": 60 }
+  }
+}

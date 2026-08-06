@@ -1,0 +1,187 @@
+{
+  "r1": {
+    "id": "r1",
+    "segments": [
+      {
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [144.9631, -37.8136],
+            [144.9648, -37.8118]
+          ]
+        },
+        "streetName": "Elizabeth St",
+        "sensorId": 21,
+        "sensorName": "Elizabeth St North",
+        "countPerMinute": 34,
+        "band": "LOW",
+        "readingTakenAt": "2026-08-07T14:20:00+10:00"
+      },
+      {
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [144.9648, -37.8118],
+            [144.9671, -37.8109]
+          ]
+        },
+        "streetName": "La Trobe St",
+        "sensorId": 22,
+        "sensorName": "La Trobe St East",
+        "countPerMinute": 41,
+        "band": "LOW",
+        "readingTakenAt": "2026-08-07T14:18:00+10:00"
+      }
+    ],
+    "attribution": "City of Melbourne, CC BY 4.0",
+    "dataLastUpdated": "2026-08-07T14:20:00+10:00"
+  },
+  "r2": {
+    "id": "r2",
+    "segments": [
+      {
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [144.9631, -37.8136],
+            [144.9652, -37.8098]
+          ]
+        },
+        "streetName": "Bourke St",
+        "sensorId": 15,
+        "sensorName": "Bourke St Mall",
+        "countPerMinute": 58,
+        "band": "MEDIUM",
+        "readingTakenAt": "2026-08-07T14:19:00+10:00"
+      },
+      {
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [144.9652, -37.8098],
+            [144.9671, -37.8109]
+          ]
+        },
+        "streetName": "Russell St",
+        "sensorId": 16,
+        "sensorName": "Russell St North",
+        "countPerMinute": 50,
+        "band": "MEDIUM",
+        "readingTakenAt": "2026-08-07T14:20:00+10:00"
+      }
+    ],
+    "attribution": "City of Melbourne, CC BY 4.0",
+    "dataLastUpdated": "2026-08-07T14:20:00+10:00"
+  },
+  "r3": {
+    "id": "r3",
+    "segments": [
+      {
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [144.9631, -37.8136],
+            [144.9666, -37.8154]
+          ]
+        },
+        "streetName": "Swanston St",
+        "sensorId": 34,
+        "sensorName": "Swanston St North",
+        "countPerMinute": 187,
+        "band": "HIGH",
+        "readingTakenAt": "2026-08-07T14:20:00+10:00"
+      },
+      {
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [144.9666, -37.8154],
+            [144.9671, -37.8109]
+          ]
+        },
+        "streetName": "Little Lonsdale St",
+        "sensorId": null,
+        "sensorName": null,
+        "countPerMinute": null,
+        "band": "NO_DATA",
+        "readingTakenAt": null
+      }
+    ],
+    "attribution": "City of Melbourne, CC BY 4.0",
+    "dataLastUpdated": "2026-08-07T14:20:00+10:00"
+  },
+  "p1": {
+    "id": "p1",
+    "segments": [
+      {
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [144.9631, -37.8136],
+            [144.9666, -37.8154]
+          ]
+        },
+        "streetName": "Flinders Lane",
+        "sensorId": 41,
+        "sensorName": "Flinders Lane West",
+        "countPerMinute": 88,
+        "band": "MEDIUM",
+        "readingTakenAt": "2026-08-07T14:22:00+10:00"
+      },
+      {
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [144.9666, -37.8154],
+            [144.9671, -37.8183]
+          ]
+        },
+        "streetName": "Degraves St",
+        "sensorId": 42,
+        "sensorName": "Degraves St South",
+        "countPerMinute": 90,
+        "band": "MEDIUM",
+        "readingTakenAt": "2026-08-07T14:22:00+10:00"
+      }
+    ],
+    "attribution": "City of Melbourne, CC BY 4.0",
+    "dataLastUpdated": "2026-08-07T14:22:00+10:00"
+  },
+  "p2": {
+    "id": "p2",
+    "segments": [
+      {
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [144.9631, -37.8136],
+            [144.9648, -37.8118]
+          ]
+        },
+        "streetName": "Swanston St",
+        "sensorId": 34,
+        "sensorName": "Swanston St North",
+        "countPerMinute": 187,
+        "band": "HIGH",
+        "readingTakenAt": "2026-08-07T14:22:00+10:00"
+      },
+      {
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [144.9648, -37.8118],
+            [144.9671, -37.8183]
+          ]
+        },
+        "streetName": "Flinders St",
+        "sensorId": 44,
+        "sensorName": "Flinders St Station Concourse",
+        "countPerMinute": 175,
+        "band": "HIGH",
+        "readingTakenAt": "2026-08-07T14:22:00+10:00"
+      }
+    ],
+    "attribution": "City of Melbourne, CC BY 4.0",
+    "dataLastUpdated": "2026-08-07T14:22:00+10:00"
+  }
+}

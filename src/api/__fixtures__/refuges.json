@@ -1,0 +1,32 @@
+{
+  "refuges": [
+    {
+      "id": 12,
+      "name": "State Library Victoria",
+      "category": "library",
+      "address": "328 Swanston St, Melbourne",
+      "walkingDistanceMetres": 240,
+      "lat": -37.8098,
+      "lng": 144.9652
+    },
+    {
+      "id": 47,
+      "name": "Flagstaff Gardens",
+      "category": "park",
+      "address": null,
+      "walkingDistanceMetres": 480,
+      "lat": -37.811,
+      "lng": 144.954
+    },
+    {
+      "id": 61,
+      "name": "Queen Victoria Gardens",
+      "category": "park",
+      "address": "Linlithgow Ave, Melbourne",
+      "walkingDistanceMetres": 620,
+      "lat": -37.8225,
+      "lng": 144.9724
+    }
+  ],
+  "searchRadiusMetres": 500
+}
