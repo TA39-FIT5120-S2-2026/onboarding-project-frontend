@@ -27,7 +27,7 @@ export default function ForecastTimeline({ timeline, liveCount }) {
 
       <div className="mt-3 flex h-40 items-end gap-3" aria-hidden="true">
         {liveCount != null && (
-          <div className="flex flex-1 flex-col items-center justify-end gap-1">
+          <div className="flex h-full flex-1 flex-col items-center justify-end gap-1">
             <div
               className="w-full rounded-t bg-accent"
               style={{ height: `${(liveCount / maxValue) * 100}%`, minHeight: 2 }}
@@ -38,7 +38,7 @@ export default function ForecastTimeline({ timeline, liveCount }) {
         {timeline.map((point) => (
           <div
             key={point.minutesAhead}
-            className="flex flex-1 flex-col items-center justify-end gap-1"
+            className="flex h-full flex-1 flex-col items-center justify-end gap-1"
           >
             <div
               className="w-full rounded-t border-2 border-dashed border-ink/50 bg-ink/5"
