@@ -69,8 +69,9 @@ src/
       Section.jsx
       Callout.jsx                Shared shape for every warning/info box (role passed by caller)
     layout/
-      AppShell.jsx               Skip link + <main>
+      AppShell.jsx               Skip link, mobile top bar, <main>
       NavBar.jsx                 Bottom tabs <md, left rail >=md, with icons + privacy note
+      StartOverButton.jsx        Resets session state, with a confirm prompt
     SensoryIndicator.jsx         Low / Medium / High badge
     BandIcon.jsx                 Shape per band (circle/triangle/square/dash)
     BandExplainer.jsx            "How we rate crowd levels" - homepage band walkthrough
@@ -143,6 +144,8 @@ src/
 ```
 
 `tolerance` and `lastSelectedRoute` are the two fields the acceptance criteria call out directly. `routes`, `accessPoints`, `toleranceApplied` and `noRouteMeetsTolerance` were added because Route Detail (AC 1.3.2, 1.3.3) needs the full route list and the tolerance the API evaluated against to survive navigation from Route Results - `GET /api/routes/:id` does not return them. `origin`/`destination` let Refuges and Forecast prefill a location without a second geocoding step. `checkInSeen` implements "appears once per session" from the Build decisions table.
+
+`resetSession()` sets the whole object back to these defaults. It's exposed via `useSession()` and wired to `StartOverButton.jsx` (mobile top bar, desktop rail) so a user can clear a planned trip without waiting for a refresh - the button confirms first, since it discards an in-progress plan.
 
 ---
 
