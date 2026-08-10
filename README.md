@@ -31,17 +31,39 @@ npm run dev
 ```
 
 ```
-VITE_API_BASE_URL=http://localhost:3000
+VITE_API_BASE_URL=https://onboarding-project-backend.onrender.com
 VITE_USE_FIXTURES=false
 ```
 
-Requires the backend (`onboarding-project-backend`) running at
-`VITE_API_BASE_URL`, with its database seeded - see that repo's `data-import/`
-scripts. Without a seeded `cbd_boundary` table every route request 500s. Set
-`VITE_USE_FIXTURES=true` to develop the route-planning flow against bundled
-fixtures instead. The Refuges and Forecast pages always use bundled sample
+`.env.example` defaults to the deployed backend, verified working end to end
+(health, sensors/latest, routes/validate, routes/plan - shapes match
+localhost exactly, CORS open). Point `VITE_API_BASE_URL` at
+`http://localhost:3000` instead to run the backend locally - see that repo's
+`data-import/` scripts to seed its database first; without a seeded
+`cbd_boundary` table every route request 500s. Set `VITE_USE_FIXTURES=true`
+to develop the route-planning flow against bundled fixtures instead of
+either backend. The Refuges and Forecast pages always use bundled sample
 data regardless of this flag - no backend implements either endpoint, see
 `docs/BACKEND_GAPS.md`.
+
+---
+
+## Deployment
+
+`VITE_*` env vars are inlined into the JS bundle at **build time** by Vite -
+setting them on the host after deploying does nothing. Set
+`VITE_API_BASE_URL` and `VITE_USE_FIXTURES` in the hosting platform's
+environment variable settings (not a committed `.env` file - that's
+gitignored and never reaches the build server) before it runs `npm run
+build`.
+
+**SPA routing on static hosts:** this app uses client-side routing
+(`react-router-dom`), so a direct load or refresh of a route like `/routes/3`
+must be rewritten to `index.html` by the host, or it 404s - the host has no
+literal `/routes/3` file to serve. `public/_redirects` (`/* /index.html
+200`) handles this on Netlify; Vite copies it into `dist/` automatically on
+build. Other static hosts need their own equivalent (e.g. Vercel's
+`vercel.json` rewrites, or an S3/CloudFront custom error response).
 
 Other scripts:
 
@@ -143,6 +165,9 @@ src/
 scripts/
   generate-cbd-places.mjs        Dev-only. Regenerates cbdPlaces.generated.js - see docs/PLACE_DATA.md
   placeOverrides.js               Curated additions/exclusions, shared with the runtime place list
+
+public/
+  _redirects                     Netlify SPA fallback - see Deployment below
 ```
 
 ---
