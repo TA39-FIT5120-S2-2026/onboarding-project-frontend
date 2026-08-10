@@ -15,6 +15,7 @@ import { getForecast } from '../api/forecast.js';
 import { ApiError } from '../api/client.js';
 import { userMessageFor } from '../api/errors.js';
 import { useSession } from '../context/SessionContext.jsx';
+import { buildTripQuery } from '../utils/tripQuery.js';
 
 const UNRECOGNISED_MESSAGE = 'Enter a location from the suggestions, like Flinders Street Station.';
 
@@ -72,7 +73,7 @@ export default function RoutePlanner() {
     try {
       const result = await planRoute({ origin, destination, crowdTolerance: session.tolerance });
       setPlan(result, { origin, destination });
-      navigate('/routes');
+      navigate(`/routes${buildTripQuery({ origin, destination, tolerance: session.tolerance })}`);
     } catch (error) {
       if (error instanceof ApiError && error.data?.canPlanRoute === false) {
         setErrors({

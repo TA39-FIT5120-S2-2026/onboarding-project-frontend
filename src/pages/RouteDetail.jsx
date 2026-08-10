@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, ChevronDown, Footprints, Info, MapPinOff } from 'lucide-react';
 import { useSession } from '../context/SessionContext.jsx';
 import SensoryIndicator from '../components/SensoryIndicator.jsx';
@@ -12,10 +12,13 @@ import Card from '../components/ui/Card.jsx';
 import Stat from '../components/ui/Stat.jsx';
 import Section from '../components/ui/Section.jsx';
 import Button from '../components/ui/Button.jsx';
+import Callout from '../components/ui/Callout.jsx';
 import PageHeader from '../components/ui/PageHeader.jsx';
 import { BAND_COLORS } from '../utils/bandLabels.js';
 import { formatDistance, formatDuration } from '../utils/format.js';
 import { mergeSections } from '../utils/routeSections.js';
+import { planRoute } from '../api/routes.js';
+import { buildTripQuery, parseTripQuery } from '../utils/tripQuery.js';
 
 const FALLBACK_SOURCE = 'City of Melbourne Open Data';
 const NAMED_SENSORS_SHOWN = 2;
@@ -39,9 +42,54 @@ function stretchLabel(stretch) {
 export default function RouteDetail() {
   const { routeId } = useParams();
   const navigate = useNavigate();
-  const { session, setSelectedRouteId } = useSession();
+  const [searchParams] = useSearchParams();
+  const { session, setPlan, setTolerance, setSelectedRouteId } = useSession();
   const route = session.routes.find((r) => String(r.routeId) === routeId);
   const [showDirections, setShowDirections] = useState(false);
+  const [isReplanning, setIsReplanning] = useState(false);
+  const [wasReplanned, setWasReplanned] = useState(false);
+
+  // Session state is in-memory only (no localStorage/sessionStorage - see
+  // CLAUDE.md), so a refresh clears it. If the trip is still encoded in the
+  // URL, re-plan it. routeId isn't guaranteed stable across /plan calls
+  // (it's just a 1-based index into that response), so if the exact id
+  // doesn't come back, fall back to the recommended route and say so rather
+  // than silently showing a different route under the same URL.
+  useEffect(() => {
+    if (route) return;
+    if (session.routes.length > 0) return; // had a session, this id just doesn't exist
+    const trip = parseTripQuery(searchParams);
+    if (!trip) return;
+
+    let cancelled = false;
+    setIsReplanning(true);
+    planRoute({
+      origin: trip.origin,
+      destination: trip.destination,
+      crowdTolerance: trip.tolerance ?? session.tolerance,
+    })
+      .then((result) => {
+        if (cancelled) return;
+        if (trip.tolerance) setTolerance(trip.tolerance);
+        setPlan(result, { origin: trip.origin, destination: trip.destination });
+
+        const stillExists = result.routes.some((r) => String(r.routeId) === routeId);
+        if (!stillExists) {
+          const recommended = result.routes.find((r) => r.recommended) ?? result.routes[0];
+          setWasReplanned(true);
+          setSelectedRouteId(recommended.routeId);
+          navigate(`/routes/${recommended.routeId}${buildTripQuery(trip)}`, { replace: true });
+        }
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (!cancelled) setIsReplanning(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [route, session.routes.length, searchParams]);
 
   const backLink = (
     <Link
@@ -54,6 +102,18 @@ export default function RouteDetail() {
   );
 
   if (!route) {
+    if (isReplanning) {
+      return (
+        <div className="mx-auto max-w-md">
+          {backLink}
+          <h1 className="text-display-sm text-ink">Route Detail</h1>
+          <Card className="mt-4 animate-pulse text-center">
+            <p className="text-caption text-ink/60">Getting your trip back…</p>
+          </Card>
+        </div>
+      );
+    }
+
     return (
       <div className="mx-auto max-w-md">
         {backLink}
@@ -80,7 +140,7 @@ export default function RouteDetail() {
 
   function handleSwitch(altRoute) {
     setSelectedRouteId(altRoute.routeId);
-    navigate(`/routes/${altRoute.routeId}`);
+    navigate(`/routes/${altRoute.routeId}${buildTripQuery(session)}`);
   }
 
   return (
@@ -94,6 +154,15 @@ export default function RouteDetail() {
             : undefined
         }
       />
+
+      {wasReplanned && (
+        <div className="mb-4">
+          <Callout tone="info" role="status">
+            We replanned this trip after your session refreshed. This may not be exactly the
+            route you had before.
+          </Callout>
+        </div>
+      )}
 
       <Card>
         <div className="flex flex-wrap items-start justify-between gap-3">

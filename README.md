@@ -158,6 +158,7 @@ src/
     format.js                     Distance/duration/count/time formatting
     refugeCategories.js           Labels, colours and shapes per refuge category
     routeSections.js              Presentation-only merge of adjacent same-band crowd sections
+    tripQuery.js                  Encodes/decodes a trip in the URL, for refresh recovery
     __tests__/
   test/
     setup.jsx                     jest-dom matchers + global react-leaflet mock
@@ -196,6 +197,12 @@ public/
 `tolerance` and `selectedRouteId` are the two fields the acceptance criteria call out directly. `routes`, `decision`, `alternativeComparison` and `hasAcceptableRoute` come straight off the backend's `/plan` response and are kept so Route Detail (AC 1.3.2, 1.3.3) survives navigation from Route Results without a second request - see `docs/BACKEND_GAPS.md` for why there is no `GET /api/routes/:id` to refetch from. `origin`/`destination` let Refuges and Forecast prefill a location without a second geocoding step. `checkInSeen` implements "appears once per session" from the Build decisions table.
 
 `resetSession()` sets the whole object back to these defaults. It's exposed via `useSession()` and wired to `StartOverButton.jsx` (mobile top bar, desktop rail) so a user can clear a planned trip without waiting for a refresh - the button confirms first, since it discards an in-progress plan.
+
+### Surviving a refresh without storage
+
+A page refresh clears `SessionContext` (that's the point - nothing persists). Route Results and Route Detail encode the trip in the URL query string instead (`src/utils/tripQuery.js` - place ids, not coordinates, e.g. `/routes/3?o=melbourne-central&d=bourke-street-mall&tol=MEDIUM`). On mount, if session state is empty but the URL has a trip, both pages silently re-call `POST /api/routes/plan` and rebuild the view. The URL isn't storage - it doesn't outlive the tab being closed or a fresh navigation - so this doesn't conflict with the no-`localStorage`/no-`sessionStorage` rule.
+
+`routeId` isn't guaranteed stable across `/plan` calls (it's just a 1-based index into that particular response - see `docs/BACKEND_GAPS.md`), so a refresh-triggered re-plan on Route Detail can't promise the exact same route comes back. If the original `routeId` doesn't reappear, the page falls back to the newly recommended route, updates the URL to match, and shows a plain-language notice ("We replanned this trip after your session refreshed...") rather than silently swapping the displayed route under an unchanged URL.
 
 ---
 
