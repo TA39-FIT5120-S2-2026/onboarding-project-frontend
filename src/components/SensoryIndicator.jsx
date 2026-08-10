@@ -18,13 +18,13 @@ export default function SensoryIndicator({ band, countPerMinute, showCount = tru
   return (
     <span className="inline-flex flex-wrap items-center gap-x-2 gap-y-1">
       <span
-        className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-sm font-semibold ${colorClasses}`}
+        className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-caption font-semibold ${colorClasses}`}
       >
         <BandIcon shape={icon} />
         {text}
       </span>
       {showCount && countPerMinute != null && (
-        <span className="text-sm text-ink/70">{formatCount(countPerMinute)}</span>
+        <span className="text-caption text-ink/70">{formatCount(countPerMinute)}</span>
       )}
     </span>
   );

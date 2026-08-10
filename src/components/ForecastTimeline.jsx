@@ -9,7 +9,7 @@ export default function ForecastTimeline({ timeline, liveCount }) {
 
   return (
     <div>
-      <div className="flex flex-wrap items-center gap-4 text-sm text-ink/70">
+      <div className="flex flex-wrap items-center gap-4 text-caption text-ink/70">
         {liveCount != null && (
           <span className="flex items-center gap-1.5">
             <span aria-hidden="true" className="h-3 w-3 rounded-sm bg-accent" />
@@ -32,7 +32,7 @@ export default function ForecastTimeline({ timeline, liveCount }) {
               className="w-full rounded-t bg-accent"
               style={{ height: `${Math.max((liveCount / maxValue) * 100, 4)}%` }}
             />
-            <span className="text-xs font-medium text-ink">Now</span>
+            <span className="text-micro font-medium text-ink">Now</span>
           </div>
         )}
         {timeline.map((point) => (
@@ -44,20 +44,23 @@ export default function ForecastTimeline({ timeline, liveCount }) {
               className="w-full rounded-t border-2 border-dashed border-ink/50 bg-ink/5"
               style={{ height: `${Math.max((point.predictedCount / maxValue) * 100, 4)}%` }}
             />
-            <span className="text-xs text-ink/60">+{point.minutesAhead}m</span>
+            <span className="text-micro text-ink/60">+{point.minutesAhead}m</span>
           </div>
         ))}
       </div>
 
       <ul className="mt-3 space-y-1">
         {liveCount != null && (
-          <li className="flex items-center justify-between gap-2 text-sm">
+          <li className="flex items-center justify-between gap-2 text-caption">
             <span className="font-medium text-ink">Now (live)</span>
             <span className="text-ink">{liveCount} counts / min</span>
           </li>
         )}
         {timeline.map((point) => (
-          <li key={point.minutesAhead} className="flex items-center justify-between gap-2 text-sm">
+          <li
+            key={point.minutesAhead}
+            className="flex items-center justify-between gap-2 text-caption"
+          >
             <span className="text-ink/70">In {point.minutesAhead} minutes (est.)</span>
             <SensoryIndicator band={point.band} countPerMinute={point.predictedCount} />
           </li>

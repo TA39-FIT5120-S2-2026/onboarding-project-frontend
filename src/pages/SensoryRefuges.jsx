@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { SearchX } from 'lucide-react';
 import { useSession } from '../context/SessionContext.jsx';
 import PlaceCombobox from '../components/PlaceCombobox.jsx';
 import RefugeMap from '../components/RefugeMap.jsx';
@@ -7,6 +8,10 @@ import RefugeIcon from '../components/RefugeIcon.jsx';
 import RefugeDetail from '../components/RefugeDetail.jsx';
 import RefugeFilter from '../components/RefugeFilter.jsx';
 import LocationPinIcon from '../components/LocationPinIcon.jsx';
+import PageHeader from '../components/ui/PageHeader.jsx';
+import Card from '../components/ui/Card.jsx';
+import Button from '../components/ui/Button.jsx';
+import Section from '../components/ui/Section.jsx';
 import { getRefuges } from '../api/refuges.js';
 import { findPlaceByName } from '../data/cbdPlaces.js';
 import { formatDistance } from '../utils/format.js';
@@ -33,11 +38,13 @@ export default function SensoryRefuges() {
   const [locationInput, setLocationInput] = useState('');
   const [locationError, setLocationError] = useState(null);
   const [refuges, setRefuges] = useState([]);
+  const [categoryCounts, setCategoryCounts] = useState({});
   const [searchRadiusMetres, setSearchRadiusMetres] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedRefugeId, setSelectedRefugeId] = useState(null);
   const [selectedTypes, setSelectedTypes] = useState([]);
 
+  // Filtered list shown on the page and the map.
   useEffect(() => {
     if (!location) return;
     let cancelled = false;
@@ -52,6 +59,25 @@ export default function SensoryRefuges() {
       cancelled = true;
     };
   }, [location, selectedTypes]);
+
+  // Unfiltered count per category for the filter chips - independent of
+  // the current filter, so a chip's count reflects what's nearby, not
+  // what's currently shown.
+  useEffect(() => {
+    if (!location) return;
+    let cancelled = false;
+    getRefuges({ lat: location.lat, lng: location.lng }).then((result) => {
+      if (cancelled) return;
+      const counts = result.refuges.reduce((acc, refuge) => {
+        acc[refuge.category] = (acc[refuge.category] ?? 0) + 1;
+        return acc;
+      }, {});
+      setCategoryCounts(counts);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [location]);
 
   function handleSelectRefuge(refuge) {
     setSelectedRefugeId((current) => (current === refuge.id ? null : refuge.id));
@@ -71,82 +97,101 @@ export default function SensoryRefuges() {
   if (!location) {
     return (
       <div className="mx-auto max-w-md">
-        <h1 className="text-2xl font-semibold">Sensory Refuges</h1>
-        <p className="mt-2 text-ink/70">
-          Choose a location to find nearby parks, libraries and quiet spaces.
-        </p>
-        <form onSubmit={handleLocationSubmit} className="mt-4 space-y-3" noValidate>
-          <PlaceCombobox
-            id="refuge-location"
-            label="Location"
-            value={locationInput}
-            onChange={setLocationInput}
-            error={locationError}
-          />
-          <button
-            type="submit"
-            className="w-full rounded-lg bg-accent px-4 py-3 font-medium text-white hover:bg-accent-dark"
-          >
-            Find Refuges
-          </button>
-        </form>
+        <PageHeader
+          title="Sensory Refuges"
+          description="Choose a location to find nearby parks, libraries and quiet spaces."
+        />
+        <Card>
+          <form onSubmit={handleLocationSubmit} className="space-y-4" noValidate>
+            <PlaceCombobox
+              id="refuge-location"
+              label="Location"
+              value={locationInput}
+              onChange={setLocationInput}
+              error={locationError}
+            />
+            <Button type="submit" fullWidth>
+              Find Refuges
+            </Button>
+          </form>
+        </Card>
       </div>
     );
   }
 
   return (
-    <div className="mx-auto max-w-md md:max-w-3xl">
-      <h1 className="text-2xl font-semibold">Sensory Refuges</h1>
-      <p className="mt-1 text-sm text-ink/60">
-        Near {location.name}
-        {searchRadiusMetres != null ? ` · within ${searchRadiusMetres} m` : ''}
-      </p>
+    <div className="mx-auto max-w-5xl">
+      <PageHeader title="Sensory Refuges" eyebrow={`Near ${location.name}`} />
 
-      <div className="mt-4">
-        <RefugeFilter selected={selectedTypes} onChange={setSelectedTypes} />
-      </div>
+      <RefugeFilter selected={selectedTypes} onChange={setSelectedTypes} counts={categoryCounts} />
 
-      {isLoading && <p className="mt-4 text-sm text-ink/60">Finding nearby refuges…</p>}
+      {isLoading && <p className="mt-5 text-caption text-ink/60">Finding nearby refuges…</p>}
 
       {!isLoading && refuges.length === 0 && (
-        <p className="mt-4 text-ink/70">No refuges of the selected types were found nearby.</p>
+        <Card className="mt-5 text-center">
+          <SearchX className="mx-auto h-8 w-8 text-ink/30" aria-hidden="true" />
+          <p className="mt-3 font-semibold text-ink">
+            No refuges of the selected types were found nearby.
+          </p>
+          <p className="mt-1 text-caption text-ink/60">
+            Try a different type, or widen your search from the filter above.
+          </p>
+        </Card>
       )}
 
       {!isLoading && refuges.length > 0 && (
         <>
-          <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-[1fr,220px]">
-            <RefugeMap location={location} refuges={refuges} onSelectRefuge={handleSelectRefuge} />
-            <MapLegend items={LEGEND_ITEMS} />
-          </div>
+          <Section title="Map">
+            {searchRadiusMetres != null && (
+              <p className="mb-3 text-caption text-ink/60">
+                Showing refuges within {searchRadiusMetres} m of {location.name}.
+              </p>
+            )}
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-[1fr,220px]">
+              <RefugeMap
+                location={location}
+                refuges={refuges}
+                onSelectRefuge={handleSelectRefuge}
+              />
+              <MapLegend items={LEGEND_ITEMS} />
+            </div>
+          </Section>
 
-          <ul className="mt-4 space-y-2">
-            {refuges.map((refuge) => {
-              const isOpen = selectedRefugeId === refuge.id;
-              return (
-                <li key={refuge.id} className="rounded-lg border border-ink/10 bg-white p-3">
-                  <button
-                    type="button"
-                    onClick={() => handleSelectRefuge(refuge)}
-                    aria-expanded={isOpen}
-                    aria-controls={`refuge-detail-${refuge.id}`}
-                    className="flex w-full items-center gap-2 text-left"
-                  >
-                    <RefugeIcon category={refuge.category} className="h-4 w-4 flex-shrink-0" />
-                    <span className="font-medium text-ink">{refuge.name}</span>
-                  </button>
-                  <p className="mt-1 text-sm text-ink/70">
-                    {refugeCategoryLabel(refuge.category)} ·{' '}
-                    {formatDistance(refuge.walkingDistanceMetres)} away
-                  </p>
-                  {isOpen && (
-                    <div id={`refuge-detail-${refuge.id}`}>
-                      <RefugeDetail refuge={refuge} />
-                    </div>
-                  )}
-                </li>
-              );
-            })}
-          </ul>
+          <Section title="Nearby">
+            <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              {refuges.map((refuge) => {
+                const isOpen = selectedRefugeId === refuge.id;
+                return (
+                  <li key={refuge.id}>
+                    <Card>
+                      <button
+                        type="button"
+                        onClick={() => handleSelectRefuge(refuge)}
+                        aria-expanded={isOpen}
+                        aria-controls={`refuge-detail-${refuge.id}`}
+                        className="flex w-full items-center gap-2 text-left"
+                      >
+                        <RefugeIcon
+                          category={refuge.category}
+                          className="h-5 w-5 flex-shrink-0 text-accent"
+                        />
+                        <span className="font-semibold text-ink">{refuge.name}</span>
+                      </button>
+                      <p className="mt-1 text-caption text-ink/70">
+                        {refugeCategoryLabel(refuge.category)} ·{' '}
+                        {formatDistance(refuge.walkingDistanceMetres)} away
+                      </p>
+                      {isOpen && (
+                        <div id={`refuge-detail-${refuge.id}`}>
+                          <RefugeDetail refuge={refuge} />
+                        </div>
+                      )}
+                    </Card>
+                  </li>
+                );
+              })}
+            </ul>
+          </Section>
         </>
       )}
     </div>

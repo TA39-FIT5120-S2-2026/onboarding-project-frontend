@@ -9,10 +9,10 @@ export default function AppShell({ children }) {
       <NavBar />
       <main
         id="main-content"
-        className="flex-1 px-4 pb-24 pt-6 md:px-8 md:pb-8 md:pt-8"
+        className="flex-1 px-4 pb-28 pt-6 md:px-10 md:pb-12 md:pt-10"
         tabIndex={-1}
       >
-        {children}
+        <div className="mx-auto w-full max-w-6xl">{children}</div>
       </main>
     </div>
   );

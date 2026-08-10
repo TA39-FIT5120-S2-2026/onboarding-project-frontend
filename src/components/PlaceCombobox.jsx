@@ -14,11 +14,11 @@ export default function PlaceCombobox({ id, label, value, onChange, error, hint 
 
   return (
     <div>
-      <label htmlFor={id} className="block text-sm font-medium text-ink">
+      <label htmlFor={id} className="block text-caption font-semibold text-ink">
         {label}
       </label>
       {hint && (
-        <p id={hintId} className="mt-0.5 text-sm text-ink/60">
+        <p id={hintId} className="mt-0.5 text-micro text-ink/60">
           {hint}
         </p>
       )}
@@ -31,7 +31,7 @@ export default function PlaceCombobox({ id, label, value, onChange, error, hint 
         autoComplete="off"
         aria-invalid={error ? 'true' : undefined}
         aria-describedby={describedBy}
-        className="mt-1 w-full rounded-lg border border-ink/20 bg-white px-3 py-2 text-ink placeholder:text-ink/40"
+        className="mt-1.5 w-full rounded-lg border border-ink/20 bg-white px-3.5 py-3 text-body text-ink placeholder:text-ink/40"
       />
       <datalist id={listId}>
         {CBD_PLACES.map((place) => (
