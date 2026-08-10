@@ -24,8 +24,10 @@ The live JSON contract is documented in `API_CONTRACT.md`.
    curated, defensible dataset or product-owned list is supplied.
 2. **Sparse refuge coverage.** The existing landmarks source legitimately
    supports some parks/gardens/reserves and libraries, but it is not a complete
-   refuge catalogue. A richer authoritative source should follow the existing
-   import-to-MySQL architecture.
+   refuge catalogue - inside the CBD polygon it's 12 parks/gardens, 10
+   galleries/museums, but only **2 libraries** (Athenaeum + State Library), so
+   the library filter will look sparse. A richer authoritative source should
+   follow the existing import-to-MySQL architecture.
 3. **No general public-transport access-point dataset.** Southern Cross Station
    is one explicit route gateway, not a nearest-stop feature. The UI still
    cannot show the nearest tram/train stop at both route ends.
@@ -40,7 +42,16 @@ The live JSON contract is documented in `API_CONTRACT.md`.
 ## Deliberately unchanged behaviour
 
 - Route ranking remains band, peak, average, duration, then distance. The
-  frontend mirrors that rule in its explicit test fixtures.
+  frontend mirrors that rule in its explicit test fixtures. **This also means
+  AC 1.2.2 and AC 1.3.3 are not literally satisfied** - both say "the route
+  with the lowest pedestrian exposure is marked Recommended" / "the
+  lowest-exposure route available is displayed," but ranking by peak before
+  average means the recommended/fallback route is not always the lowest-average
+  one. Confirmed against the live backend (State Library → Town Hall): a
+  1-sensor route (avg 69, peak 69) outranked a 7-sensor route (avg 36, peak
+  86). `RouteExposureStats.jsx` shows average, peak and sensor count on every
+  card so this is visible rather than hidden, but the AC wording and the
+  ranking rule still disagree - worth reconciling one way or the other.
 - Sensor matching remains at the configured backend radius.
 - The existing sensory thresholds, tolerance rules, freshness policy, and
   congested-section algorithm are unchanged.

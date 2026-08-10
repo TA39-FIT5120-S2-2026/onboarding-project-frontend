@@ -8,14 +8,12 @@ const TEASERS = [
     icon: TreePine,
     title: 'Find a quiet space',
     description: 'Parks, libraries and quiet corners near you.',
-    sampleData: true,
   },
   {
     to: '/forecast',
     icon: CloudSun,
     title: 'Check the forecast',
     description: 'Predicted crowd levels for the next hour.',
-    sampleData: true,
   },
 ];
 
@@ -32,7 +30,7 @@ export default function FeatureTeaserCards() {
             <p className="mt-3 font-semibold text-ink">{teaser.title}</p>
             <p className="mt-1 text-caption text-ink/60">{teaser.description}</p>
             <span className="mt-3 inline-flex items-center gap-1 text-caption font-medium text-accent">
-              Open{teaser.sampleData ? ' (sample data)' : ''}
+              Open
               <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
             </span>
           </Card>

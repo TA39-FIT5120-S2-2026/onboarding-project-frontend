@@ -80,6 +80,6 @@ the generated list.
 ## Known limitation
 
 The landmarks dataset yields far fewer walkable destinations than a real
-geocoder would (44 generated + 2 colloquial + 9 out-of-coverage, at time of
-writing) - see `docs/BACKEND_GAPS.md` for the same limitation as it affects
-the Sensory Refuges feature.
+geocoder would (44 generated + 2 colloquial + 1 supported access point + 9
+out-of-coverage, at time of writing) - see `docs/BACKEND_GAPS.md` for the
+same sparse-landmarks limitation as it affects the Sensory Refuges feature.

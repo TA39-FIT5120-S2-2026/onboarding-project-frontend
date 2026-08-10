@@ -28,6 +28,17 @@ const MAP_LEGEND_ITEMS = [
   { label: 'Medium', lineStyle: { color: BAND_COLORS.MEDIUM, pattern: 'dashed' } },
   { label: 'High (busier than usual)', lineStyle: { color: BAND_COLORS.HIGH, pattern: 'dotted' } },
   { label: 'No sensor data', lineStyle: { color: BAND_COLORS.NO_DATA, pattern: 'dashed' } },
+  { label: 'Start', icon: <span aria-hidden="true" className="inline-block h-3 w-3 flex-shrink-0 rounded-full border-2 border-white bg-accent shadow" /> },
+  {
+    label: 'Destination',
+    icon: (
+      <span
+        aria-hidden="true"
+        className="inline-block h-3.5 w-3.5 flex-shrink-0 rounded-sm rounded-bl-none bg-ink"
+        style={{ transform: 'rotate(45deg)' }}
+      />
+    ),
+  },
 ];
 
 function stretchLabel(stretch) {
@@ -213,7 +224,7 @@ export default function RouteDetail() {
           below.
         </p>
         <div className="grid grid-cols-1 gap-3 md:grid-cols-[1fr,minmax(220px,auto)]">
-          <RouteMap sections={route.routeSections} />
+          <RouteMap sections={route.routeSections} origin={session.origin} destination={session.destination} />
           <MapLegend items={MAP_LEGEND_ITEMS} />
         </div>
       </Section>

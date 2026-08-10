@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { SearchX } from 'lucide-react';
+import { ArrowLeft, SearchX } from 'lucide-react';
 import { useSession } from '../context/SessionContext.jsx';
 import PlaceCombobox from '../components/PlaceCombobox.jsx';
 import RefugeMap from '../components/RefugeMap.jsx';
@@ -105,6 +105,16 @@ export default function SensoryRefuges({ refugeLoader = getRefuges }) {
     setLocation(place);
   }
 
+  function handleBackToSearch() {
+    setLocation(null);
+    setLocationInput('');
+    setLocationError(null);
+    setRefuges([]);
+    setSelectedTypes([]);
+    setSelectedRefugeId(null);
+    setRequestError(null);
+  }
+
   if (!location) {
     return (
       <div className="mx-auto max-w-md">
@@ -132,7 +142,20 @@ export default function SensoryRefuges({ refugeLoader = getRefuges }) {
 
   return (
     <div className="mx-auto max-w-5xl">
-      <PageHeader title="Sensory Refuges" eyebrow={`Near ${location.name}`} />
+      <PageHeader
+        back={
+          <button
+            type="button"
+            onClick={handleBackToSearch}
+            className="mb-2 inline-flex items-center gap-1.5 text-caption font-medium text-ink/60 hover:text-accent"
+          >
+            <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+            Back to search
+          </button>
+        }
+        title="Sensory Refuges"
+        eyebrow={`Near ${location.name}`}
+      />
 
       <RefugeFilter selected={selectedTypes} onChange={setSelectedTypes} counts={categoryCounts} />
 

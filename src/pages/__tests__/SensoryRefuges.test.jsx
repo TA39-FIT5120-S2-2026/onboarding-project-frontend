@@ -64,6 +64,23 @@ describe('SensoryRefuges (AC 2.1.1)', () => {
     expect(screen.getByText('State Library Victoria')).toBeInTheDocument();
     expect(screen.getByText('Flagstaff Gardens')).toBeInTheDocument();
   });
+
+  it('"Back to search" returns to the location form without leaving the page', async () => {
+    const user = userEvent.setup();
+    renderApp('/');
+
+    await user.type(screen.getByLabelText('Origin'), 'Melbourne Central');
+    await user.type(screen.getByLabelText('Destination'), 'Bourke Street Mall');
+    await user.click(screen.getByRole('button', { name: /find route/i }));
+    await waitFor(() => expect(screen.getByText('Route Results')).toBeInTheDocument());
+    await user.click(screen.getAllByRole('link', { name: 'Refuges' })[0]);
+    await waitFor(() => expect(screen.getByText('State Library Victoria')).toBeInTheDocument());
+
+    await user.click(screen.getByRole('button', { name: /back to search/i }));
+
+    expect(screen.getByLabelText('Location')).toBeInTheDocument();
+    expect(screen.queryByTestId('map-container')).not.toBeInTheDocument();
+  });
 });
 
 describe('SensoryRefuges selection (AC 2.1.2)', () => {
