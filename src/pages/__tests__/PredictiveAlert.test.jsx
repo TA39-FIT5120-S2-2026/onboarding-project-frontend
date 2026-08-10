@@ -75,7 +75,7 @@ describe('PredictiveAlert on Route Planner (AC 2.2.3)', () => {
     const user = userEvent.setup();
     renderApp();
 
-    await planSelectAndReturn(user, 'Docklands Library');
+    await planSelectAndReturn(user, 'Chinatown');
 
     // No positive UI change to wait for on the "no alert" path, so give the
     // forecast fetch's fixture delay time to settle before asserting absence.

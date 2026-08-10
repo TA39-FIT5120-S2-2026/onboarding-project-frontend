@@ -38,14 +38,18 @@ export default function RoutePlanner() {
     }
 
     let cancelled = false;
-    getForecast({ lat: destination.lat, lng: destination.lng }).then((result) => {
-      if (cancelled) return;
-      if (result.sufficientHistory && result.peakBand === 'HIGH') {
-        setPredictiveAlert({ locationName: destination.name, peakWindow: result.peakWindow });
-      } else {
-        setPredictiveAlert(null);
-      }
-    });
+    getForecast({ lat: destination.lat, lng: destination.lng })
+      .then((result) => {
+        if (cancelled) return;
+        if (result.sufficientHistory && result.peakBand === 'HIGH') {
+          setPredictiveAlert({ locationName: destination.name, peakWindow: result.peakWindow });
+        } else {
+          setPredictiveAlert(null);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setPredictiveAlert(null);
+      });
     return () => {
       cancelled = true;
     };
