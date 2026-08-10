@@ -1,7 +1,14 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Navigation } from 'lucide-react';
 import PlaceCombobox from '../components/PlaceCombobox.jsx';
 import PredictiveAlert from '../components/PredictiveAlert.jsx';
+import BandExplainer from '../components/BandExplainer.jsx';
+import FeatureTeaserCards from '../components/FeatureTeaserCards.jsx';
+import Card from '../components/ui/Card.jsx';
+import Button from '../components/ui/Button.jsx';
+import Section from '../components/ui/Section.jsx';
+import Callout from '../components/ui/Callout.jsx';
 import { findPlaceByName, isWithinCbd } from '../data/cbdPlaces.js';
 import { getRoutes } from '../api/routes.js';
 import { getForecast } from '../api/forecast.js';
@@ -93,61 +100,71 @@ export default function RoutePlanner() {
   }
 
   return (
-    <div className="mx-auto max-w-md md:max-w-lg">
+    <div className="mx-auto max-w-3xl">
       {predictiveAlert && (
-        <PredictiveAlert
-          locationName={predictiveAlert.locationName}
-          peakWindow={predictiveAlert.peakWindow}
-        />
+        <div className="mb-6">
+          <PredictiveAlert
+            locationName={predictiveAlert.locationName}
+            peakWindow={predictiveAlert.peakWindow}
+          />
+        </div>
       )}
 
-      <h1 className="text-2xl font-semibold">Quiet Compass</h1>
-      <p className="mt-1 text-ink/70">
-        We&apos;ll find the quietest, least crowded walking path for your journey today.
-      </p>
-
-      <form onSubmit={handleSubmit} className="mt-6 space-y-4" noValidate>
-        {errors.general && (
-          <p
-            role="alert"
-            className="rounded-lg bg-band-highBg px-3 py-2 text-sm font-medium text-band-high"
-          >
-            {errors.general}
+      <div className="grid grid-cols-1 gap-8 md:grid-cols-[1.1fr,1fr] md:items-start">
+        <div>
+          <h1 className="text-display-sm text-ink">Quiet Compass</h1>
+          <p className="mt-2 max-w-prose text-body text-ink/70">
+            Walk Melbourne&apos;s CBD by crowd level, not just distance. We compare your route
+            options using real pedestrian counts and point you to the calmest one.
           </p>
-        )}
 
-        <PlaceCombobox
-          id="origin"
-          label="Origin"
-          value={originText}
-          onChange={setOriginText}
-          error={errors.origin}
-          hint="Enter a location within Melbourne CBD"
-        />
+          <form onSubmit={handleSubmit} className="mt-6 space-y-4" noValidate>
+            {errors.general && (
+              <Callout tone="alert" role="alert">
+                {errors.general}
+              </Callout>
+            )}
 
-        <PlaceCombobox
-          id="destination"
-          label="Destination"
-          value={destinationText}
-          onChange={setDestinationText}
-          error={errors.destination}
-        />
+            <PlaceCombobox
+              id="origin"
+              label="Origin"
+              value={originText}
+              onChange={setOriginText}
+              error={errors.origin}
+              hint="Enter a location within Melbourne CBD"
+            />
 
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className="w-full rounded-lg bg-accent px-4 py-3 font-medium text-white hover:bg-accent-dark disabled:opacity-60"
-        >
-          {isSubmitting ? 'Finding route…' : 'Find Route'}
-        </button>
-      </form>
+            <PlaceCombobox
+              id="destination"
+              label="Destination"
+              value={destinationText}
+              onChange={setDestinationText}
+              error={errors.destination}
+            />
 
-      <div className="mt-8 rounded-lg bg-accent/5 p-4 text-sm text-ink/80">
-        <p className="font-medium text-ink">Low-Sensory Routing</p>
-        <p className="mt-1">
-          We&apos;ll find the quietest, least crowded path for your journey today.
-        </p>
+            <Button type="submit" disabled={isSubmitting} fullWidth>
+              <Navigation className="h-4 w-4" aria-hidden="true" />
+              {isSubmitting ? 'Finding route…' : 'Find Route'}
+            </Button>
+          </form>
+        </div>
+
+        <Card className="bg-accent/5">
+          <p className="font-semibold text-ink">Why crowd level, not just speed?</p>
+          <p className="mt-2 text-caption text-ink/70">
+            Busy streets mean noise and close contact. We weigh that in, so our first suggestion is
+            the easiest route to be in - even when it isn&apos;t the shortest.
+          </p>
+        </Card>
       </div>
+
+      <Section title="How we rate crowd levels">
+        <BandExplainer />
+      </Section>
+
+      <Section title="Explore more">
+        <FeatureTeaserCards />
+      </Section>
     </div>
   );
 }

@@ -29,3 +29,19 @@ Match docs/API_CONTRACT.md exactly - do not invent field names.
 docs/ACCEPTANCE_CRITERIA.md - what to build
 docs/API_CONTRACT.md - endpoint shapes, authoritative
 docs/ACCESSIBILITY.md - checks before any UI card is Done
+
+## Decided, do not ask
+
+- Map library: Leaflet with react-leaflet, OpenStreetMap tiles
+- Styling: Tailwind CSS
+- Icons: lucide-react
+- Band icon shapes: LOW = Circle, MEDIUM = Triangle, HIGH = Square, NO_DATA = Minus
+- Node 20, npm
+- Visual tone: calm and low-stimulation. Generous whitespace, one accent
+  colour, no gradients, no animation beyond simple fades. Our users are
+  sensory-sensitive, so the interface must not be visually busy.
+
+## When something is not specified
+
+Make a reasonable choice, note it in a "Decisions made" section at the end
+of your response, and keep going. Do not stop to ask.

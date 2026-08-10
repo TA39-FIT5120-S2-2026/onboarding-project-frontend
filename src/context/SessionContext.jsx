@@ -42,6 +42,7 @@ export function SessionProvider({ children }) {
       setLastSelectedRoute: (route) =>
         setSession((prev) => ({ ...prev, lastSelectedRoute: route })),
       setCheckInSeen: (seen) => setSession((prev) => ({ ...prev, checkInSeen: seen })),
+      resetSession: () => setSession(INITIAL_STATE),
     }),
     [session],
   );

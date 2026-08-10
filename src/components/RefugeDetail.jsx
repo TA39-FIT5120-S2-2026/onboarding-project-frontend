@@ -5,7 +5,7 @@ import { refugeCategoryLabel } from '../utils/refugeCategories.js';
 // (AC 2.1.2 Scenario 2).
 export default function RefugeDetail({ refuge }) {
   return (
-    <dl className="mt-2 space-y-1 border-t border-ink/10 pt-2 text-sm">
+    <dl className="mt-3 space-y-1.5 border-t border-ink/10 pt-3 text-caption">
       <div className="flex justify-between gap-2">
         <dt className="text-ink/60">Category</dt>
         <dd className="font-medium text-ink">{refugeCategoryLabel(refuge.category)}</dd>

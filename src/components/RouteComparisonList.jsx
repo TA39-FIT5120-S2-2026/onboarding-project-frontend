@@ -12,7 +12,7 @@ export default function RouteComparisonList({ routes, onSelectRoute }) {
   const gridClass = GRID_COLS[Math.min(routes.length, 3)] ?? 'md:grid-cols-3';
 
   return (
-    <ul className={`grid grid-cols-1 gap-3 ${gridClass}`}>
+    <ul className={`grid grid-cols-1 gap-4 ${gridClass}`}>
       {routes.map((route) => (
         <li key={route.id}>
           <RouteCard route={route} onSelect={onSelectRoute} />

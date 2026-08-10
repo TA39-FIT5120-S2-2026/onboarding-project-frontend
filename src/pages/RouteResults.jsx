@@ -1,10 +1,14 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import { MapPinOff } from 'lucide-react';
 import { useSession } from '../context/SessionContext.jsx';
 import AccessPointCard from '../components/AccessPointCard.jsx';
 import RouteComparisonList from '../components/RouteComparisonList.jsx';
 import BandLegend from '../components/BandLegend.jsx';
 import CheckInModal from '../components/CheckInModal.jsx';
+import PageHeader from '../components/ui/PageHeader.jsx';
+import Card from '../components/ui/Card.jsx';
+import Button from '../components/ui/Button.jsx';
 import { getRoutes } from '../api/routes.js';
 
 export default function RouteResults() {
@@ -63,25 +67,30 @@ export default function RouteResults() {
 
   if (!routes.length) {
     return (
-      <div>
-        <h1 className="text-2xl font-semibold">Route Results</h1>
-        <p className="mt-3 text-ink/70">
-          No route planned yet.{' '}
-          <Link to="/" className="font-medium text-accent underline">
+      <div className="mx-auto max-w-md">
+        <PageHeader title="Route Results" />
+        <Card className="text-center">
+          <MapPinOff className="mx-auto h-8 w-8 text-ink/30" aria-hidden="true" />
+          <p className="mt-3 text-caption text-ink/70">
+            No route planned yet. Enter an origin and destination to see your options.
+          </p>
+          <Button to="/" variant="primary" className="mt-4">
             Go to Route Planner
-          </Link>{' '}
-          to enter an origin and destination.
-        </p>
+          </Button>
+        </Card>
       </div>
     );
   }
 
   return (
-    <div className="mx-auto max-w-md md:max-w-4xl">
-      <h1 className="text-2xl font-semibold">Route Results</h1>
+    <div className="mx-auto max-w-5xl">
+      <PageHeader
+        title="Route Results"
+        description="Compare your options - the calmest route is highlighted first."
+      />
 
       {accessPoints && (
-        <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
           <AccessPointCard label="Nearest stop at origin" accessPoint={accessPoints.origin} />
           <AccessPointCard
             label="Nearest stop at destination"
@@ -90,11 +99,11 @@ export default function RouteResults() {
         </div>
       )}
 
-      <div className="mt-4">
+      <div className="mt-5">
         <RouteComparisonList routes={routes} onSelectRoute={handleSelectRoute} />
       </div>
 
-      <div className="mt-4">
+      <div className="mt-5">
         <BandLegend />
       </div>
 

@@ -16,6 +16,7 @@ No login. No accounts. Nothing stored beyond the browser session.
 | HTTP | fetch, wrapped in `src/api/` |
 | State | React context for session state, no Redux |
 | Styling | Tailwind CSS, meets WCAG AA |
+| Icons | lucide-react for UI chrome; band shapes (circle/triangle/square/dash) stay hand-rolled SVG in `BandIcon.jsx` so they're never at the mercy of an icon library's default style |
 | Testing | Vitest + React Testing Library + jsdom |
 | Linting | ESLint (flat config, incl. `eslint-plugin-jsx-a11y`) + Prettier |
 
@@ -60,11 +61,21 @@ src/
     Forecast.jsx
     __tests__/
   components/
+    ui/                          Design-system primitives, reused across all 5 pages
+      Button.jsx                 Polymorphic: renders <Link> when given `to`, else <button>
+      Card.jsx
+      Stat.jsx                   Big number + small label (the "attractive number" pattern)
+      PageHeader.jsx
+      Section.jsx
+      Callout.jsx                Shared shape for every warning/info box (role passed by caller)
     layout/
-      AppShell.jsx               Skip link + <main>
-      NavBar.jsx                 Bottom tabs <md, left rail >=md
+      AppShell.jsx               Skip link, mobile top bar, <main>
+      NavBar.jsx                 Bottom tabs <md, left rail >=md, with icons + privacy note
+      StartOverButton.jsx        Resets session state, with a confirm prompt
     SensoryIndicator.jsx         Low / Medium / High badge
     BandIcon.jsx                 Shape per band (circle/triangle/square/dash)
+    BandExplainer.jsx            "How we rate crowd levels" - homepage band walkthrough
+    FeatureTeaserCards.jsx       Homepage teaser cards linking to Refuges and Forecast
     IndicatorDetail.jsx          Expandable sensor detail
     RouteCard.jsx
     RouteComparisonList.jsx
@@ -82,7 +93,7 @@ src/
     RefugeMarker.jsx
     RefugeIcon.jsx
     RefugeDetail.jsx
-    RefugeFilter.jsx
+    RefugeFilter.jsx             Chip-style type filter with a per-category count
     LocationPinIcon.jsx
     ForecastTimeline.jsx
     EstimateDisclaimer.jsx
@@ -134,6 +145,8 @@ src/
 
 `tolerance` and `lastSelectedRoute` are the two fields the acceptance criteria call out directly. `routes`, `accessPoints`, `toleranceApplied` and `noRouteMeetsTolerance` were added because Route Detail (AC 1.3.2, 1.3.3) needs the full route list and the tolerance the API evaluated against to survive navigation from Route Results - `GET /api/routes/:id` does not return them. `origin`/`destination` let Refuges and Forecast prefill a location without a second geocoding step. `checkInSeen` implements "appears once per session" from the Build decisions table.
 
+`resetSession()` sets the whole object back to these defaults. It's exposed via `useSession()` and wired to `StartOverButton.jsx` (mobile top bar, desktop rail) so a user can clear a planned trip without waiting for a refresh - the button confirms first, since it discards an in-progress plan.
+
 ---
 
 ## Build decisions
@@ -166,15 +179,42 @@ Decisions made while building where the docs did not specify an approach. Confir
 
 ---
 
+## Design system
+
+A UI/UX polish pass (branch `dev-joshua`) rebuilt every page on a shared set of primitives in `src/components/ui/`, after peer-review usability feedback on a past onboarding project flagged inconsistent styling between pages, tiny type, and a homepage with no reason to scroll. Full critique-by-critique traceability is in `docs/PEER_REVIEW_RESPONSE.md`.
+
+**Type scale** (`tailwind.config.js` `theme.extend.fontSize`) - `display` / `display-sm` / `heading` / `heading-sm` / `body` / `caption` / `micro`, used instead of ad hoc `text-sm`/`text-lg` picks, so every page shares one type rhythm.
+
+**Principle - "calm but confident":** win legibility and hierarchy through type scale and whitespace, never through a second accent colour, a gradient, or motion. `Stat.jsx` is the one place a number gets to be large; everything else stays quiet. This resolves the two-sided peer-review feedback (reviewers wanted "big attractive numbers" and disliked "busy" pages) without breaking CLAUDE.md's calm, low-stimulation, one-accent-colour rule for a sensory-sensitive audience.
+
+**Primitives:**
+
+| Component | Purpose |
+|---|---|
+| `Button` | Polymorphic CTA - `to` prop renders a `react-router` `Link`, otherwise a `<button>` (callers still set `type` explicitly) |
+| `Card` | The one card look, `highlighted` prop for the accent ring (Recommended route, etc.) |
+| `Stat` | Icon + big number + small label |
+| `PageHeader` | Consistent title/description/back-link opening for every page |
+| `Section` | Consistent vertical rhythm between page blocks |
+| `Callout` | Shared shape for every warning/info box. `tone="alert"` (band-high colours) or `tone="info"` (accent tint); the caller passes `role="alert"` when the box must be announced - `CrowdWarning`, `ToleranceWarning`, `NoQualifyingRouteMessage` and `PredictiveAlert` all render through this now instead of four near-identical hand-rolled boxes |
+
+Band colours in `tailwind.config.js` are still checked against the WCAG relative-luminance formula before use, not eyeballed - `band.medium` was darkened from an initial pick that measured 4.47:1 to `#7A5C0E` (5.51:1) for exactly this reason.
+
+---
+
 ## Pages
 
-### 1. Route Planner - `/`
+### 1. Route Planner (homepage) - `/`
 
 **Covers AC 1.1.1 scenario 1 and 3, AC 2.2.3**
 
-- Origin and destination inputs
-- Plan Route button
-- Predictive alert banner at the top when `lastSelectedRoute` exists and its next-hour forecast is HIGH
+Stays on `/` - the acceptance criteria pin Route Planner to this path - but is no longer just a bare form. Top to bottom:
+
+- Predictive alert banner when `lastSelectedRoute` exists and its next-hour forecast is HIGH
+- A short hero (what the app does, in two sentences) beside a "why crowd level, not just speed" card
+- The origin/destination form as the clear primary action
+- `BandExplainer` - Low/Medium/High spelled out before a first-time user meets them on the results page
+- `FeatureTeaserCards` - links into Refuges and Forecast, so a first visit doesn't hide two of the app's three features behind the nav
 
 **Predictive alert must show:** location name, expected busy period, the words "estimate based on historical patterns", and a link to Forecast.
 
