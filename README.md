@@ -2,7 +2,7 @@
 
 React + Vite web app helping neurodivergent and sensory-sensitive adults navigate Melbourne CBD by sensory load rather than speed.
 
-**Live:** https://effulgent-cendol-d63bd1.netlify.app/
+**Live:** https://quitecompass.netlify.app/
 
 No login. No accounts. Nothing stored beyond the browser session.
 
