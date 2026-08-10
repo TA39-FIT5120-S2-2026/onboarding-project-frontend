@@ -70,6 +70,19 @@ describe('Forecast (AC 2.2.1)', () => {
     ).toBeInTheDocument();
   });
 
+  it('"Back to search" returns to the location form without leaving the page', async () => {
+    const user = userEvent.setup();
+    renderApp('/forecast');
+
+    await chooseLocation(user, 'Melbourne Central');
+    await waitFor(() => expect(screen.getByText('Estimated')).toBeInTheDocument());
+
+    await user.click(screen.getByRole('button', { name: /back to search/i }));
+
+    expect(screen.getByLabelText('Area or sensor location')).toBeInTheDocument();
+    expect(screen.queryByText('Estimated')).not.toBeInTheDocument();
+  });
+
   it('shows the live count as a distinct "Now" value when a route is active this session', async () => {
     const user = userEvent.setup();
     renderApp('/');

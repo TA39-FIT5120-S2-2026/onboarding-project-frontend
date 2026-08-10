@@ -48,6 +48,22 @@ describe('RouteMap (AC 1.2.3 Scenario 1)', () => {
     expect(low.dataset.dash).toBe('solid');
     expect(high.dataset.color).not.toBe(low.dataset.color);
   });
+
+  it('draws no start/end markers when origin and destination are not provided', () => {
+    render(<RouteMap sections={sections} />);
+    expect(screen.queryAllByTestId('marker')).toHaveLength(0);
+  });
+
+  it('draws a start and an end marker when origin and destination are provided', () => {
+    render(
+      <RouteMap
+        sections={sections}
+        origin={{ lat: -37.8136, lng: 144.9631, name: 'Melbourne Central' }}
+        destination={{ lat: -37.8109, lng: 144.9671, name: 'Bourke Street Mall' }}
+      />,
+    );
+    expect(screen.getAllByTestId('marker')).toHaveLength(2);
+  });
 });
 
 describe('MapLegend (AC 1.2.3 Scenario 1)', () => {

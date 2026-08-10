@@ -323,7 +323,7 @@ Appears once, when a route is selected on Route Results.
 
 **Covers AC 1.2.3, AC 1.3.2, AC 1.3.3**
 
-- Map with the route drawn
+- Map with the route drawn, plus a start marker (filled circle) and destination marker (pin), distinct by shape as well as colour
 - HIGH-band segments visually distinguished, with a legend explaining the distinction
 - `CrowdWarning` naming the affected street section and the data last-updated time
 - `ToleranceWarning` when the route exceeds the session tolerance, offering an alternative route within tolerance with its walking time and a one-tap switch
@@ -338,7 +338,8 @@ Appears once, when a route is selected on Route Results.
 **Live since 2026-08-10.** `GET /api/refuges` returns real refuges near the
 searched location - see `docs/API_CONTRACT.md`. Coverage is still limited
 (only 2 libraries inside the CBD polygon, no verified quiet-space source) -
-see `docs/BACKEND_GAPS.md`.
+see `docs/BACKEND_GAPS.md`. "Back to search" returns to the location form
+without a full page navigation, keeping any active filters reset.
 
 - Map with refuge markers within 500m, visually distinct from route markers, with a legend
 - Type filter: park, library, quiet space
@@ -357,7 +358,8 @@ If no route is active, prompt for a location before searching.
 **Live since 2026-08-10.** `GET /api/forecast` returns a real next-hour
 prediction - see `docs/API_CONTRACT.md`. The full historical import remains
 approval-gated, so most locations still return `sufficientHistory: false`
-until enough data exists - see `docs/BACKEND_GAPS.md`.
+until enough data exists - see `docs/BACKEND_GAPS.md`. "Back to search"
+returns to the location form without a full page navigation.
 
 - Area or sensor selector
 - Timeline of predicted counts for the next 60 minutes

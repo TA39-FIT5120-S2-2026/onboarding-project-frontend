@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { CloudOff, Clock } from 'lucide-react';
+import { ArrowLeft, CloudOff, Clock } from 'lucide-react';
 import { useSession } from '../context/SessionContext.jsx';
 import PlaceCombobox from '../components/PlaceCombobox.jsx';
 import ForecastTimeline from '../components/ForecastTimeline.jsx';
@@ -59,6 +59,14 @@ export default function Forecast({ forecastLoader = getForecast }) {
     setLocation(place);
   }
 
+  function handleBackToSearch() {
+    setLocation(null);
+    setLocationInput('');
+    setLocationError(null);
+    setForecast(null);
+    setRequestError(null);
+  }
+
   if (!location) {
     return (
       <div className="mx-auto max-w-md">
@@ -86,7 +94,20 @@ export default function Forecast({ forecastLoader = getForecast }) {
 
   return (
     <div className="mx-auto max-w-3xl">
-      <PageHeader title="Forecast" eyebrow={forecast?.sensorName ?? location.name} />
+      <PageHeader
+        back={
+          <button
+            type="button"
+            onClick={handleBackToSearch}
+            className="mb-2 inline-flex items-center gap-1.5 text-caption font-medium text-ink/60 hover:text-accent"
+          >
+            <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+            Back to search
+          </button>
+        }
+        title="Forecast"
+        eyebrow={forecast?.sensorName ?? location.name}
+      />
 
       <div className="mb-5">
         <EstimateDisclaimer />
