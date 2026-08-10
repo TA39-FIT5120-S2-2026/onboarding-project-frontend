@@ -1,10 +1,17 @@
 {
   "sensorId": 34,
   "sensorName": "Swanston St North",
+  "sensorDistanceMetres": 12,
   "generatedAt": "2026-08-07T14:00:00+10:00",
   "windowMinutes": 60,
   "basis": "historical",
   "sufficientHistory": true,
+  "current": {
+    "pedestrianCount": 38,
+    "band": "LOW",
+    "timestamp": "2026-08-07T13:58:00+10:00",
+    "freshnessStatus": "CURRENT"
+  },
   "timeline": [
     { "minutesAhead": 15, "predictedCount": 92, "band": "MEDIUM" },
     { "minutesAhead": 30, "predictedCount": 164, "band": "HIGH" },

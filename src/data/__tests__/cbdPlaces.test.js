@@ -24,6 +24,17 @@ describe('CBD_PLACES', () => {
     expect(CBD_PLACES.some((p) => p.id === 'st-kilda-beach')).toBe(true);
     expect(CBD_PLACES.some((p) => p.farFromCbd)).toBe(true);
   });
+
+  it('includes Southern Cross as the explicit supported gateway at the backend coordinate', () => {
+    const southernCross = CBD_PLACES.find((place) => place.id === 'southern-cross-station');
+    expect(southernCross).toMatchObject({
+      lat: -37.8183,
+      lng: 144.9524,
+      supportedAccessPoint: true,
+    });
+    expect(southernCross.nearCbd).toBeUndefined();
+    expect(southernCross.farFromCbd).toBeUndefined();
+  });
 });
 
 describe('isWithinCbd', () => {

@@ -43,10 +43,9 @@ localhost exactly, CORS open). Point `VITE_API_BASE_URL` at
 `http://localhost:3000` instead to run the backend locally - see that repo's
 `data-import/` scripts to seed its database first; without a seeded
 `cbd_boundary` table every route request 500s. Set `VITE_USE_FIXTURES=true`
-to develop the route-planning flow against bundled fixtures instead of
-either backend. The Refuges and Forecast pages always use bundled sample
-data regardless of this flag - no backend implements either endpoint, see
-`docs/BACKEND_GAPS.md`.
+to develop against bundled fixtures instead of a live backend - this now
+covers routes, refuges and forecast, all three of which are live endpoints
+as of 2026-08-10 (see `docs/API_CONTRACT.md`).
 
 ---
 
@@ -142,9 +141,9 @@ src/
     errors.js                    HTTP status -> plain-language copy (backend has no error code field)
     routes.js                    POST /api/routes/plan, POST /api/routes/validate
     sensors.js                   GET /api/sensors/latest
-    refuges.js                   always serves bundled sample data - no backend endpoint exists
-    forecast.js                  always serves bundled sample data - no backend endpoint exists
-    __fixtures__/                route-plan fixture + fixture switch, used when VITE_USE_FIXTURES=true
+    refuges.js                   GET /api/refuges (live since 2026-08-10)
+    forecast.js                  GET /api/forecast (live since 2026-08-10)
+    __fixtures__/                route-plan/refuges/forecast fixtures, used when VITE_USE_FIXTURES=true
   data/
     cbdPlaces.js                 Combines generated + colloquial + out-of-coverage places; search
     cbdPlaces.generated.js       GENERATED - see docs/PLACE_DATA.md, never hand-edited
@@ -336,10 +335,10 @@ Appears once, when a route is selected on Route Results.
 
 **Covers AC 2.1.1, AC 2.1.2, AC 2.1.3**
 
-**Sample data, no on-page notice.** No backend endpoint exists
-(`docs/BACKEND_GAPS.md`); the page always shows bundled sample locations.
-An earlier "Sample data" disclosure was removed on an explicit product
-decision - see `docs/ACCESSIBILITY.md`.
+**Live since 2026-08-10.** `GET /api/refuges` returns real refuges near the
+searched location - see `docs/API_CONTRACT.md`. Coverage is still limited
+(only 2 libraries inside the CBD polygon, no verified quiet-space source) -
+see `docs/BACKEND_GAPS.md`.
 
 - Map with refuge markers within 500m, visually distinct from route markers, with a legend
 - Type filter: park, library, quiet space
@@ -355,10 +354,10 @@ If no route is active, prompt for a location before searching.
 
 **Covers AC 2.2.1, AC 2.2.2**
 
-**Sample data, no on-page notice.** No backend endpoint exists
-(`docs/BACKEND_GAPS.md`); the page always shows a bundled sample forecast.
-An earlier "Sample data" disclosure was removed on an explicit product
-decision - see `docs/ACCESSIBILITY.md`.
+**Live since 2026-08-10.** `GET /api/forecast` returns a real next-hour
+prediction - see `docs/API_CONTRACT.md`. The full historical import remains
+approval-gated, so most locations still return `sufficientHistory: false`
+until enough data exists - see `docs/BACKEND_GAPS.md`.
 
 - Area or sensor selector
 - Timeline of predicted counts for the next 60 minutes
@@ -423,19 +422,19 @@ Different shapes, not just different colours. This is the single most important 
 10. Forecast
 11. `PredictiveAlert` on Route Planner
 
-Steps 1 to 4 need only `GET /api/routes`, so start as soon as the backend has that endpoint.
+Steps 1 to 4 need only `POST /api/routes/plan`, so start as soon as the backend has that endpoint.
 
 ---
 
 ## Working against the backend
 
-The backend at `onboarding-project-backend` implements `POST /api/routes/plan`
-(see `docs/API_CONTRACT.md`) but not `/api/refuges` or `/api/forecast` (see
-`docs/BACKEND_GAPS.md`). For route planning, either run the real backend
-(`VITE_USE_FIXTURES=false`, database seeded per that repo's `data-import/`
-scripts) or develop against the bundled fixture (`VITE_USE_FIXTURES=true`).
-Delete the flag before a real deployment - fixtures are for development only.
-The test suite always runs with `VITE_USE_FIXTURES=true` (set in
-`vite.config.js`'s `test.env`), regardless of the local `.env` file, so tests
-are deterministic. Refuges and Forecast ignore this flag entirely - they
-always serve bundled sample data.
+The backend at `onboarding-project-backend` implements `POST /api/routes/plan`,
+`GET /api/refuges` and `GET /api/forecast` (see `docs/API_CONTRACT.md`) -
+known remaining gaps are tracked in `docs/BACKEND_GAPS.md`. Either run the
+real backend (`VITE_USE_FIXTURES=false`, database seeded and migrated per
+that repo's `data-import/` scripts and `database/migrations/`) or develop
+against the bundled fixtures (`VITE_USE_FIXTURES=true`), which now cover all
+three endpoints. Delete the flag before a real deployment - fixtures are for
+development only. The test suite always runs with `VITE_USE_FIXTURES=true`
+(set in `vite.config.js`'s `test.env`), regardless of the local `.env` file,
+so tests are deterministic.

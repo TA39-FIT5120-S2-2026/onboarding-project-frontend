@@ -158,13 +158,14 @@ What has actually been verified, and what still needs a human with a browser and
 
 **Before this branch is presented or merged:** run the keyboard-only pass, the screen reader pass, axe/Lighthouse, and the greyscale screenshot check in an actual browser (`npm run dev`). Everything above marked Automated or Lint-checked should make that pass fast, not replace it.
 
-**Known deviation - Refuges and Forecast show sample data without a
-disclosure.** Neither `GET /api/refuges` nor `GET /api/forecast` exists (see
-`docs/BACKEND_GAPS.md`); both pages render bundled sample data as if it were
-live, on an explicit product decision to remove the "Sample data" notice that
-previously flagged this. This is a deliberate deviation from this file's own
-"plain language, no overstating confidence" principle, made knowingly rather
-than by omission - recorded here so it isn't mistaken for an oversight.
+**Resolved - Refuges and Forecast are live.** As of 2026-08-10 both
+`GET /api/refuges` and `GET /api/forecast` are implemented and the pages call
+them directly (`VITE_USE_FIXTURES=true` still serves fixtures for local
+dev/tests). The "Sample data" notice removed earlier this branch is no longer
+needed for that reason - both pages show real data. Remaining honesty gaps
+(sparse refuge coverage, `sufficientHistory: false` until enough forecast
+history exists) are tracked in `docs/BACKEND_GAPS.md`, not hidden from the
+user - `Forecast.jsx` already surfaces `sufficientHistory` explicitly.
 
 ---
 

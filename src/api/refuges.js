@@ -1,19 +1,14 @@
-// No backend implements GET /api/refuges (see docs/BACKEND_GAPS.md). This
-// always serves bundled sample data - never a network call - so the Refuges
-// page stays usable.
-import refuges from './__fixtures__/refuges.json';
+import { request } from './client.js';
 
-const FIXTURE_DELAY_MS = 250;
+export function getRefuges({ lat, lng, types = [] }) {
+  const query = new URLSearchParams({
+    lat: String(lat),
+    lng: String(lng),
+  });
 
-function delay(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
+  if (types.length > 0) {
+    query.set('types', types.join(','));
+  }
 
-export async function getRefuges({ types } = {}) {
-  await delay(FIXTURE_DELAY_MS);
-
-  const filtered =
-    types && types.length ? refuges.refuges.filter((r) => types.includes(r.category)) : refuges.refuges;
-
-  return { refuges: filtered, searchRadiusMetres: refuges.searchRadiusMetres };
+  return request(`/api/refuges?${query.toString()}`);
 }

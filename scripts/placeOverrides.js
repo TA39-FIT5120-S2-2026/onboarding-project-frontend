@@ -32,6 +32,18 @@ export const COLLOQUIAL_PLACES = [
   { id: 'chinatown', name: 'Chinatown', lat: -37.8118, lng: 144.9698 },
 ];
 
+// Explicit transport gateways supported by the backend even though their
+// exact coordinate falls just outside the CLUE Melbourne (CBD) polygon.
+export const SUPPORTED_ACCESS_POINT_PLACES = [
+  {
+    id: 'southern-cross-station',
+    name: 'Southern Cross Station',
+    lat: -37.8183,
+    lng: 144.9524,
+    supportedAccessPoint: true,
+  },
+];
+
 // Real places just outside the backend's CBD polygon (the CLUE "Melbourne
 // (CBD)" small area, which is narrower than colloquial "the CBD" - see
 // docs/PLACE_DATA.md), plus places nowhere near it. Kept selectable so
@@ -41,13 +53,6 @@ export const COLLOQUIAL_PLACES = [
 // coverage area" hint before submit, since a user could reasonably expect
 // them to be included.
 export const OUTSIDE_COVERAGE_PLACES = [
-  {
-    id: 'southern-cross-station',
-    name: 'Southern Cross Station',
-    lat: -37.8183,
-    lng: 144.9524,
-    nearCbd: true,
-  },
   { id: 'flagstaff-gardens', name: 'Flagstaff Gardens', lat: -37.811, lng: 144.954, nearCbd: true },
   {
     id: 'docklands-library',

@@ -502,7 +502,7 @@ These are implementation decisions, not acceptance criteria. They are recorded h
 | Authentication | None. No accounts, no stored personal data |
 | Origin/destination/refuge/forecast location input, since the contract takes `lat,lng` and there is no geocoding endpoint | Static named-place list (`frontend/src/data/cbdPlaces.js`), offered as a labelled type-ahead. A few real landmarks outside the CBD are included deliberately so the out-of-bounds scenario is reachable from the list |
 | Forecast area/sensor selector, since there is no endpoint listing sensors | Same named-place list; calls `GET /api/forecast?lat=&lng=`, not `sensorId` |
-| Distinguishing predicted from live values on the Forecast page, since `GET /api/forecast` returns predictions only | Live value = the session's most recently selected route's `averageCountPerMinute`, shown as a solid "Now" bar; predicted bars are outlined and tagged "est." No selected route this session means no "Now" bar |
+| Distinguishing predicted from live values on the Forecast page | Live value = `data.current.pedestrianCount` from `GET /api/forecast` itself (the nearest sensor's latest reading at the searched location), shown as a solid "Now" bar; predicted bars are outlined and tagged "est." `current: null` means no "Now" bar |
 | Frontend test framework, not specified but required by AC 1.1.2's boundary-value task | Vitest + React Testing Library + jsdom |
 
 ---
@@ -519,8 +519,8 @@ assumes. Full detail in `docs/BACKEND_GAPS.md`.
 | 1.1.1 Scenario 2 (access points) | **Blocked** - no PTV data source in the backend |
 | 1.1.2, 1.1.3, 1.2.1, 1.2.3, 1.3.1, 1.3.2 | Live |
 | 1.2.2, 1.3.3 | **Live, but not literally met** - both say "lowest pedestrian exposure"; the backend ranks by band then peak reading, not average, so the route it picks is not always the lowest-average one. See `docs/BACKEND_GAPS.md` |
-| 2.1.1, 2.1.2, 2.1.3 (Sensory Refuges) | **Sample data, undisclosed** - `GET /api/refuges` not implemented; renders bundled sample data as if live (notice removed on product decision, see `docs/ACCESSIBILITY.md`) |
-| 2.2.1, 2.2.2, 2.2.3 (Forecast) | **Sample data, undisclosed** - `GET /api/forecast` not implemented; renders bundled sample data as if live (notice removed on product decision, see `docs/ACCESSIBILITY.md`) |
+| 2.1.1, 2.1.2, 2.1.3 (Sensory Refuges) | **Live since 2026-08-10** - `GET /api/refuges`. Coverage still limited (only 2 libraries inside the CBD polygon, no verified quiet-space source); see `docs/BACKEND_GAPS.md` |
+| 2.2.1, 2.2.2, 2.2.3 (Forecast) | **Live since 2026-08-10** - `GET /api/forecast`. The full historical import remains approval-gated, so most locations return `sufficientHistory: false` until enough data exists; see `docs/BACKEND_GAPS.md` |
 
 ## Related documents
 

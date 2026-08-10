@@ -16,7 +16,7 @@ A curated, pre-verified list keeps everything on-device.
 
 ## Where the list comes from
 
-Three sources, combined in `CBD_PLACES`:
+Four sources, combined in `CBD_PLACES`:
 
 1. **`src/data/cbdPlaces.generated.js`** - real City of Melbourne landmarks
    (name + coordinates) from the backend's seeded `landmarks` table,
@@ -26,7 +26,11 @@ Three sources, combined in `CBD_PLACES`:
 2. **`COLLOQUIAL_PLACES`** (`scripts/placeOverrides.js`) - names the
    landmarks dataset doesn't have under a recognisable label but people will
    type anyway (Bourke Street Mall, Chinatown). Verified the same way.
-3. **`OUTSIDE_COVERAGE_PLACES`** (`scripts/placeOverrides.js`) - real places
+3. **`SUPPORTED_ACCESS_POINT_PLACES`** (`scripts/placeOverrides.js`) - narrowly
+   scoped transport gateways accepted by the backend even when their exact
+   coordinate falls just outside the imported polygon. Southern Cross Station
+   is currently the only entry, at `-37.8183, 144.9524`.
+4. **`OUTSIDE_COVERAGE_PLACES`** (`scripts/placeOverrides.js`) - real places
    the backend's polygon rejects, kept selectable so AC 1.1.1 Scenario 3
    (destination outside the CBD) stays reachable from the combobox instead
    of only from free text. The combobox marks these "outside our coverage
@@ -40,7 +44,9 @@ CBD". This is a real, verified fact, not a bug:
 
 - Re-tested Southern Cross Station, Flagstaff Gardens, Docklands Library and
   Princes Bridge against their real landmark coordinates (not approximate
-  ones) - all four still fall outside the polygon.
+  ones) - all four fall outside the polygon. The backend now permits only a
+  75-metre Southern Cross transport-gateway exception; this does not expand
+  coverage to arbitrary Docklands locations.
 - Flagstaff *Railway Station* is inside; Flagstaff *Gardens*, 200m away, is
   not.
 
@@ -74,6 +80,6 @@ the generated list.
 ## Known limitation
 
 The landmarks dataset yields far fewer walkable destinations than a real
-geocoder would (44 generated + 2 colloquial + 9 out-of-coverage, at time of
-writing) - see `docs/BACKEND_GAPS.md` for the same limitation as it affects
-the Sensory Refuges feature.
+geocoder would (44 generated + 2 colloquial + 1 supported access point + 9
+out-of-coverage, at time of writing) - see `docs/BACKEND_GAPS.md` for the
+same sparse-landmarks limitation as it affects the Sensory Refuges feature.

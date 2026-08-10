@@ -50,7 +50,7 @@ directly to the user.
 
 | Status | When |
 |---|---|
-| 400 | Missing/invalid coordinates, or origin/destination outside the CBD (`data.canPlanRoute: false` is also present - see below) |
+| 400 | Missing/invalid coordinates or tolerance, invalid refuge type, or origin/destination outside the supported planning area (`data.canPlanRoute: false` is also present) |
 | 404 | Routing engine returned zero routes |
 | 500 | No OpenRouteService API key configured, or an unhandled error |
 | 502 | OpenRouteService request failed |
@@ -114,8 +114,14 @@ CBD-boundary pre-check without generating routes.
 ```json
 {
   "success": true,
-  "message": "Origin and destination are within Melbourne CBD.",
-  "data": { "originInsideCbd": true, "destinationInsideCbd": true, "canPlanRoute": true }
+  "message": "Origin and destination are within the supported route-planning area.",
+  "data": {
+    "originInsideCbd": true,
+    "destinationInsideCbd": true,
+    "originSupportedAccessPoint": null,
+    "destinationSupportedAccessPoint": null,
+    "canPlanRoute": true
+  }
 }
 ```
 
@@ -124,8 +130,14 @@ CBD-boundary pre-check without generating routes.
 ```json
 {
   "success": false,
-  "message": "Origin and destination must be within Melbourne CBD.",
-  "data": { "originInsideCbd": true, "destinationInsideCbd": false, "canPlanRoute": false }
+  "message": "Origin and destination must be within Melbourne CBD or at a supported transport access point.",
+  "data": {
+    "originInsideCbd": true,
+    "destinationInsideCbd": false,
+    "originSupportedAccessPoint": null,
+    "destinationSupportedAccessPoint": null,
+    "canPlanRoute": false
+  }
 }
 ```
 
@@ -168,7 +180,6 @@ Covers AC 1.1.1, 1.1.2, 1.2.1, 1.2.2, 1.2.3, 1.3.1, 1.3.2, 1.3.3.
       "reasonCode": "ROUTE_WITHIN_TOLERANCE",
       "message": "The lowest-exposure route is within your selected tolerance."
     },
-    "alternativeComparison": null,
     "routes": [
       {
         "routeId": 1,
@@ -177,14 +188,14 @@ Covers AC 1.1.1, 1.1.2, 1.2.1, 1.2.2, 1.2.3, 1.3.1, 1.3.2, 1.3.3.
         "duration": { "seconds": 840, "minutes": 14 },
         "exposure": {
           "sensoryBand": "LOW",
-          "dataCoverage": "PARTIAL",
+          "dataCoverage": "SENSOR_DATA_AVAILABLE",
           "routeRadiusMeters": 50,
           "matchedSensorCount": 3,
           "averagePedestrianCount": 42,
           "maximumPedestrianCount": 68,
           "latestReadingAt": "2026-08-06T14:20:00",
           "dataSource": "City of Melbourne Open Data",
-          "freshnessStatus": "FRESH",
+          "freshnessStatus": "CURRENT",
           "staleAfterMinutes": 30,
           "sensors": [
             {
@@ -197,7 +208,7 @@ Covers AC 1.1.1, 1.1.2, 1.2.1, 1.2.2, 1.2.3, 1.3.1, 1.3.2, 1.3.3.
               "sensoryBand": "LOW",
               "timestamp": "2026-08-06T14:20:00",
               "readingAgeMinutes": 4,
-              "freshnessStatus": "FRESH"
+              "freshnessStatus": "CURRENT"
             }
           ]
         },
@@ -213,7 +224,7 @@ Covers AC 1.1.1, 1.1.2, 1.2.1, 1.2.2, 1.2.3, 1.3.1, 1.3.2, 1.3.3.
             "maximumPedestrianCount": 68,
             "sensorIds": [34],
             "sensors": [],
-            "freshnessStatus": "FRESH"
+            "freshnessStatus": "CURRENT"
           }
         ],
         "congestedSections": [],
@@ -240,31 +251,92 @@ Covers AC 1.1.1, 1.1.2, 1.2.1, 1.2.2, 1.2.3, 1.3.1, 1.3.2, 1.3.3.
 
 - `routeId` is a **1-based index, unique only within this response** - not a durable identifier. Do not persist it across requests.
 - `routes` always has at least one entry on a 200. OpenRouteService is asked for up to 3 alternatives but may return fewer.
-- Exactly one route has `recommended: true`.
+- Exactly one route has `recommended: true` when a qualifying route exists.
+- When no route qualifies, no route is recommended and exactly one route has
+  `fallback: true`; a fallback is never also recommended.
 - `withinTolerance` is `false` when the route's `exposure.sensoryBand` exceeds `crowdTolerance`.
 - When `hasAcceptableRoute` is `false`, every route has `withinTolerance: false`; the lowest-exposure route is still returned as `fallbackRouteId`.
 - `decision.message` is plain language and drives the recommendation reason shown to the user.
 - `alternativeComparison` is present only when `decision.alternativeUsed` is `true`.
+- `freshnessStatus` is `CURRENT`, `STALE`, `UNKNOWN`, or `NO_DATA`.
+- `dataCoverage` is `SENSOR_DATA_AVAILABLE` or `NO_SENSOR_COVERAGE`.
 - `routeSections` come from slicing the route geometry at sensor-influence boundaries; `startCoordinate`/`endCoordinate` are interpolated points, **not** vertices of `geometry.coordinates` or of any `segments[].steps[].way_points` index. There is no reliable way to join a section to a street name - treat "crowd sections" and "turn-by-turn directions" (`segments[].steps`) as two independent views of the same route.
 - `congestedSections` is the subset of `routeSections` with `sensoryBand` of `MEDIUM` or `HIGH`.
 
 ---
 
-# Not implemented
+## GET /api/refuges
 
-These were part of an earlier proposed contract. The backend does not
-implement them; the frontend serves bundled sample data instead. **No
-visible notice distinguishes it from live data** - see `docs/ACCESSIBILITY.md`
-and `docs/BACKEND_GAPS.md`.
+Query parameters are required numeric `lat` and `lng`, plus optional
+comma-separated `types` containing `park`, `library`, and/or `quiet_space`.
+Results are within 500 metres by OpenRouteService walking distance and sorted
+nearest first. `address` may be `null`.
 
-| Endpoint | Frontend fallback |
-|---|---|
-| `GET /api/routes/:id` | Not needed - `POST /api/routes/plan` already returns `routeSections` and `exposure.sensors` per route, held in session |
-| `GET /api/refuges` | `src/api/refuges.js` serves `src/api/__fixtures__/refuges.json` unconditionally |
-| `GET /api/forecast` | `src/api/forecast.js` serves `src/api/__fixtures__/forecast.json` / `forecastInsufficient.json` unconditionally |
+```json
+{
+  "success": true,
+  "message": "Nearby sensory refuges retrieved successfully.",
+  "data": {
+    "searchRadiusMetres": 500,
+    "refuges": [
+      {
+        "id": 12,
+        "name": "State Library Victoria",
+        "category": "library",
+        "address": "328 Swanston St, Melbourne",
+        "walkingDistanceMetres": 320,
+        "lat": -37.8097,
+        "lng": 144.9652
+      }
+    ]
+  }
+}
+```
 
-See `docs/BACKEND_GAPS.md` for the full list of deviations and what it would
-take to close each gap.
+`quiet_space` contains only explicitly curated records. An empty list is a
+valid successful response.
+
+## GET /api/forecast
+
+Query parameters are required numeric `lat` and `lng`. The nearest active
+pedestrian sensor within 500 metres is used. Forecast points are 15, 30, 45,
+and 60 minutes ahead and use the median historical observation for the same
+sensor, Melbourne weekday, and hour. Every bucket needs at least four
+observations. Hourly counts are divided by 60 before classification.
+
+```json
+{
+  "success": true,
+  "message": "Pedestrian forecast generated successfully.",
+  "data": {
+    "sensorId": 34,
+    "sensorName": "Swanston St North",
+    "sensorDistanceMetres": 12,
+    "generatedAt": "2026-08-10T04:00:00.000Z",
+    "windowMinutes": 60,
+    "basis": "historical",
+    "sufficientHistory": true,
+    "current": {
+      "pedestrianCount": 38,
+      "band": "LOW",
+      "timestamp": "2026-08-10T13:58:00+10:00",
+      "freshnessStatus": "CURRENT"
+    },
+    "timeline": [
+      { "minutesAhead": 15, "predictedCount": 55, "band": "MEDIUM" }
+    ],
+    "peakBand": "MEDIUM",
+    "peakWindow": "14:15-14:30"
+  }
+}
+```
+
+If there is no qualifying sensor or any bucket lacks four observations,
+`sufficientHistory` is `false`, `timeline` is empty, and peak fields are
+`null`. `current` is independent of the forecast and may also be `null`.
+
+Fixtures are used only when `VITE_USE_FIXTURES=true`; production requests do
+not silently fall back to sample data.
 
 ---
 

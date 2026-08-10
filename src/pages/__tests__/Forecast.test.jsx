@@ -54,8 +54,9 @@ describe('Forecast (AC 2.2.1)', () => {
     expect(screen.getByText('In 15 minutes (est.)')).toBeInTheDocument();
     expect(screen.getByText('In 60 minutes (est.)')).toBeInTheDocument();
 
-    // No active route this session, so there is nothing live to distinguish from.
-    expect(screen.queryByText('Now (live)')).not.toBeInTheDocument();
+    // The backend supplies the sensor's latest observation independently of
+    // whether this browser session has selected a route.
+    expect(screen.getAllByText('Now (live)').length).toBeGreaterThan(0);
   });
 
   it('shows "Not enough historical data" when sufficientHistory is false', async () => {

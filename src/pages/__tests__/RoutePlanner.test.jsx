@@ -35,6 +35,17 @@ describe('RoutePlanner (AC 1.1.1)', () => {
     expect(screen.getAllByText(/min/).length).toBeGreaterThan(0);
   });
 
+  it('accepts Southern Cross Station as the explicit transport gateway', async () => {
+    const user = userEvent.setup();
+    renderPlanner();
+
+    await user.type(screen.getByLabelText('Origin'), 'Southern Cross Station');
+    await user.type(screen.getByLabelText('Destination'), 'Bourke Street Mall');
+    await user.click(screen.getByRole('button', { name: /find route/i }));
+
+    await waitFor(() => expect(screen.getByText('Route Results')).toBeInTheDocument());
+  });
+
   it('Scenario 3: shows an inline message and does not navigate when the destination is outside the CBD', async () => {
     const user = userEvent.setup();
     renderPlanner();

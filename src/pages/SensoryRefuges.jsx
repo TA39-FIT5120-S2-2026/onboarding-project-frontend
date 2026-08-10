@@ -12,7 +12,9 @@ import PageHeader from '../components/ui/PageHeader.jsx';
 import Card from '../components/ui/Card.jsx';
 import Button from '../components/ui/Button.jsx';
 import Section from '../components/ui/Section.jsx';
+import Callout from '../components/ui/Callout.jsx';
 import { getRefuges } from '../api/refuges.js';
+import { userMessageFor } from '../api/errors.js';
 import { findPlaceByName } from '../data/cbdPlaces.js';
 import { formatDistance } from '../utils/format.js';
 import { refugeCategoryLabel } from '../utils/refugeCategories.js';
@@ -24,7 +26,7 @@ const LEGEND_ITEMS = [
   { label: 'Quiet space', icon: <RefugeIcon category="quiet_space" /> },
 ];
 
-export default function SensoryRefuges() {
+export default function SensoryRefuges({ refugeLoader = getRefuges }) {
   const { session } = useSession();
   const [location, setLocation] = useState(
     session.destination
@@ -41,43 +43,50 @@ export default function SensoryRefuges() {
   const [categoryCounts, setCategoryCounts] = useState({});
   const [searchRadiusMetres, setSearchRadiusMetres] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [requestError, setRequestError] = useState(null);
   const [selectedRefugeId, setSelectedRefugeId] = useState(null);
   const [selectedTypes, setSelectedTypes] = useState([]);
 
-  // Filtered list shown on the page and the map.
   useEffect(() => {
     if (!location) return;
     let cancelled = false;
     setIsLoading(true);
-    getRefuges({ types: selectedTypes }).then((result) => {
-      if (cancelled) return;
-      setRefuges(result.refuges);
-      setSearchRadiusMetres(result.searchRadiusMetres);
-      setIsLoading(false);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [location, selectedTypes]);
+    setRequestError(null);
 
-  // Unfiltered count per category for the filter chips - independent of
-  // the current filter, so a chip's count reflects what's nearby, not
-  // what's currently shown.
-  useEffect(() => {
-    if (!location) return;
-    let cancelled = false;
-    getRefuges().then((result) => {
-      if (cancelled) return;
-      const counts = result.refuges.reduce((acc, refuge) => {
-        acc[refuge.category] = (acc[refuge.category] ?? 0) + 1;
-        return acc;
-      }, {});
-      setCategoryCounts(counts);
-    });
+    async function loadRefuges() {
+      try {
+        const result = await refugeLoader({
+          lat: location.lat,
+          lng: location.lng,
+          types: selectedTypes,
+        });
+
+        if (cancelled) return;
+        setRefuges(result.refuges);
+        setSearchRadiusMetres(result.searchRadiusMetres);
+
+        if (selectedTypes.length === 0) {
+          const counts = result.refuges.reduce((acc, refuge) => {
+            acc[refuge.category] = (acc[refuge.category] ?? 0) + 1;
+            return acc;
+          }, {});
+          setCategoryCounts(counts);
+        }
+      } catch (error) {
+        if (cancelled) return;
+        setRefuges([]);
+        setRequestError(userMessageFor(error));
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
+    }
+
+    void loadRefuges();
+
     return () => {
       cancelled = true;
     };
-  }, [location]);
+  }, [location, refugeLoader, selectedTypes]);
 
   function handleSelectRefuge(refuge) {
     setSelectedRefugeId((current) => (current === refuge.id ? null : refuge.id));
@@ -91,6 +100,8 @@ export default function SensoryRefuges() {
       return;
     }
     setLocationError(null);
+    setSelectedTypes([]);
+    setSelectedRefugeId(null);
     setLocation(place);
   }
 
@@ -125,6 +136,14 @@ export default function SensoryRefuges() {
 
       <RefugeFilter selected={selectedTypes} onChange={setSelectedTypes} counts={categoryCounts} />
 
+      {requestError && (
+        <div className="mt-5">
+          <Callout tone="alert" role="alert">
+            {requestError}
+          </Callout>
+        </div>
+      )}
+
       {isLoading && (
         <div className="mt-5" aria-busy="true">
           <p role="status" className="sr-only">
@@ -140,7 +159,7 @@ export default function SensoryRefuges() {
         </div>
       )}
 
-      {!isLoading && refuges.length === 0 && (
+      {!isLoading && !requestError && refuges.length === 0 && (
         <Card className="mt-5 text-center">
           <SearchX className="mx-auto h-8 w-8 text-ink/30" aria-hidden="true" />
           <p className="mt-3 font-semibold text-ink">

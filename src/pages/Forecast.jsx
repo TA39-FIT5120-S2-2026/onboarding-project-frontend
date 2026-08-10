@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
-import { CloudOff, Clock, Info } from 'lucide-react';
+import { CloudOff, Clock } from 'lucide-react';
 import { useSession } from '../context/SessionContext.jsx';
 import PlaceCombobox from '../components/PlaceCombobox.jsx';
 import ForecastTimeline from '../components/ForecastTimeline.jsx';
 import SensoryIndicator from '../components/SensoryIndicator.jsx';
+import EstimateDisclaimer from '../components/EstimateDisclaimer.jsx';
 import Callout from '../components/ui/Callout.jsx';
 import PageHeader from '../components/ui/PageHeader.jsx';
 import Card from '../components/ui/Card.jsx';
@@ -11,30 +12,41 @@ import Button from '../components/ui/Button.jsx';
 import Stat from '../components/ui/Stat.jsx';
 import Section from '../components/ui/Section.jsx';
 import { getForecast } from '../api/forecast.js';
+import { userMessageFor } from '../api/errors.js';
 import { findPlaceByName } from '../data/cbdPlaces.js';
 
-export default function Forecast() {
+export default function Forecast({ forecastLoader = getForecast }) {
   const { session } = useSession();
-  const selectedRoute = session.routes.find((r) => r.routeId === session.selectedRouteId) ?? null;
   const [location, setLocation] = useState(session.destination ? { ...session.destination } : null);
   const [locationInput, setLocationInput] = useState('');
   const [locationError, setLocationError] = useState(null);
   const [forecast, setForecast] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [requestError, setRequestError] = useState(null);
 
   useEffect(() => {
     if (!location) return;
     let cancelled = false;
     setIsLoading(true);
-    getForecast({ lat: location.lat, lng: location.lng }).then((result) => {
-      if (cancelled) return;
-      setForecast(result);
-      setIsLoading(false);
-    });
+    setRequestError(null);
+    setForecast(null);
+
+    async function loadForecast() {
+      try {
+        const result = await forecastLoader({ lat: location.lat, lng: location.lng });
+        if (!cancelled) setForecast(result);
+      } catch (error) {
+        if (!cancelled) setRequestError(userMessageFor(error));
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
+    }
+
+    void loadForecast();
     return () => {
       cancelled = true;
     };
-  }, [location]);
+  }, [forecastLoader, location]);
 
   function handleLocationSubmit(event) {
     event.preventDefault();
@@ -77,10 +89,16 @@ export default function Forecast() {
       <PageHeader title="Forecast" eyebrow={forecast?.sensorName ?? location.name} />
 
       <div className="mb-5">
-        <Callout tone="info" icon={Info}>
-          Estimate based on historical patterns.
-        </Callout>
+        <EstimateDisclaimer />
       </div>
+
+      {requestError && (
+        <div className="mb-5">
+          <Callout tone="alert" role="alert">
+            {requestError}
+          </Callout>
+        </div>
+      )}
 
       {isLoading && (
         <div aria-busy="true">
@@ -122,7 +140,7 @@ export default function Forecast() {
           <Section title="Next 60 minutes">
             <ForecastTimeline
               timeline={forecast.timeline}
-              liveCount={selectedRoute?.exposure.averagePedestrianCount ?? null}
+              liveCount={forecast.current?.pedestrianCount ?? null}
             />
           </Section>
         </>
