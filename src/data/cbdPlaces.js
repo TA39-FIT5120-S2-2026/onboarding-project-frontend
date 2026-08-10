@@ -1,9 +1,17 @@
-// Static place list standing in for a geocoder. API_CONTRACT.md takes
-// origin/destination as `lat,lng`; this list lets the UI offer named
-// Melbourne CBD landmarks instead of asking the user to type coordinates.
-// A few places outside the CBD boundary are included deliberately so
-// AC 1.1.1 Scenario 3 (destination outside the CBD) is reachable from the
-// combobox rather than needing free-text entry.
+// Static place list standing in for a geocoder - no third-party lookup, so
+// nothing the user types leaves the device (see docs/PLACE_DATA.md for why,
+// given the no-login/no-storage privacy stance for this user group).
+//
+// GENERATED_CBD_PLACES comes from real City of Melbourne landmarks,
+// verified against the backend's actual CBD polygon by
+// scripts/generate-cbd-places.mjs. COLLOQUIAL_PLACES fills in names the
+// landmarks dataset lacks but people will type (also verified).
+// OUTSIDE_COVERAGE_PLACES are real places the backend's polygon rejects -
+// kept selectable so AC 1.1.1 Scenario 3 (destination outside the CBD)
+// stays reachable from the combobox, not just from free text.
+
+import { GENERATED_CBD_PLACES } from './cbdPlaces.generated.js';
+import { COLLOQUIAL_PLACES, OUTSIDE_COVERAGE_PLACES } from '../../scripts/placeOverrides.js';
 
 export const CBD_BBOX = {
   minLat: -37.8226,
@@ -12,40 +20,7 @@ export const CBD_BBOX = {
   maxLng: 144.9749,
 };
 
-export const CBD_PLACES = [
-  { id: 'flinders-street-station', name: 'Flinders Street Station', lat: -37.8183, lng: 144.9671 },
-  { id: 'southern-cross-station', name: 'Southern Cross Station', lat: -37.8183, lng: 144.9524 },
-  { id: 'melbourne-central', name: 'Melbourne Central', lat: -37.8103, lng: 144.9628 },
-  { id: 'state-library-victoria', name: 'State Library Victoria', lat: -37.8098, lng: 144.9652 },
-  { id: 'bourke-street-mall', name: 'Bourke Street Mall', lat: -37.8136, lng: 144.9648 },
-  { id: 'queen-victoria-market', name: 'Queen Victoria Market', lat: -37.8076, lng: 144.9568 },
-  { id: 'federation-square', name: 'Federation Square', lat: -37.818, lng: 144.969 },
-  { id: 'melbourne-town-hall', name: 'Melbourne Town Hall', lat: -37.8154, lng: 144.9666 },
-  { id: 'chinatown', name: 'Chinatown', lat: -37.8118, lng: 144.9698 },
-  { id: 'rmit-university', name: 'RMIT University', lat: -37.8076, lng: 144.9631 },
-  { id: 'parliament-station', name: 'Parliament Station', lat: -37.8109, lng: 144.9726 },
-  { id: 'princes-theatre', name: 'Princes Theatre', lat: -37.8103, lng: 144.9718 },
-  { id: 'flagstaff-gardens', name: 'Flagstaff Gardens', lat: -37.811, lng: 144.954 },
-  { id: 'docklands-library', name: 'Docklands Library', lat: -37.8154, lng: 144.9505 },
-  {
-    id: 'yarra-river-crossing',
-    name: 'Yarra River Crossing (Princes Bridge)',
-    lat: -37.8199,
-    lng: 144.9682,
-  },
-  // Below this line: real Melbourne landmarks outside the CBD bounding box,
-  // kept selectable so AC 1.1.1 Scenario 3 is reachable from the combobox.
-  { id: 'etihad-stadium', name: 'Marvel Stadium', lat: -37.8164, lng: 144.9475 },
-  { id: 'crown-casino-riverside', name: 'Southbank Promenade', lat: -37.8245, lng: 144.9631 },
-  {
-    id: 'melbourne-cricket-ground',
-    name: 'Melbourne Cricket Ground',
-    lat: -37.8199,
-    lng: 144.9834,
-  },
-  { id: 'royal-botanic-gardens', name: 'Royal Botanic Gardens', lat: -37.8304, lng: 144.9796 },
-  { id: 'st-kilda-beach', name: 'St Kilda Beach', lat: -37.8677, lng: 144.9797 },
-];
+export const CBD_PLACES = [...GENERATED_CBD_PLACES, ...COLLOQUIAL_PLACES, ...OUTSIDE_COVERAGE_PLACES];
 
 export function findPlace(id) {
   return CBD_PLACES.find((place) => place.id === id) ?? null;
@@ -54,7 +29,14 @@ export function findPlace(id) {
 export function findPlaceByName(name) {
   const normalized = name.trim().toLowerCase();
   if (!normalized) return null;
-  return CBD_PLACES.find((place) => place.name.toLowerCase() === normalized) ?? null;
+
+  const exact = CBD_PLACES.find((place) => place.name.toLowerCase() === normalized);
+  if (exact) return exact;
+
+  // Fall back to search: if typing narrows to exactly one place, resolve it
+  // ("flinders" -> Flinders Street Station) without requiring the full name.
+  const matches = searchPlaces(name);
+  return matches.length === 1 ? matches[0] : null;
 }
 
 export function isWithinCbd(lat, lng) {
@@ -64,4 +46,61 @@ export function isWithinCbd(lat, lng) {
     lng >= CBD_BBOX.minLng &&
     lng <= CBD_BBOX.maxLng
   );
+}
+
+function normalise(text) {
+  return text.trim().toLowerCase();
+}
+
+// Tiered prefix + fuzzy matching for the combobox. Each tier is internally
+// alphabetical; tiers are concatenated and deduped, so a name-prefix match
+// always outranks a looser one.
+export function searchPlaces(query, limit = 8) {
+  const q = normalise(query);
+  if (!q) return [];
+
+  const seen = new Set();
+  const results = [];
+
+  function addAll(places) {
+    for (const place of places) {
+      if (results.length >= limit) return;
+      if (seen.has(place.id)) continue;
+      seen.add(place.id);
+      results.push(place);
+    }
+  }
+
+  const byNamePrefix = CBD_PLACES.filter((p) => normalise(p.name).startsWith(q)).sort((a, b) =>
+    a.name.localeCompare(b.name),
+  );
+  addAll(byNamePrefix);
+  if (results.length >= limit) return results;
+
+  const byWordPrefix = CBD_PLACES.filter((p) =>
+    normalise(p.name)
+      .split(/\s+/)
+      .some((word) => word.startsWith(q)),
+  ).sort((a, b) => a.name.localeCompare(b.name));
+  addAll(byWordPrefix);
+  if (results.length >= limit) return results;
+
+  // Subsequence fuzzy match: every character of q appears in order within
+  // the place name (not necessarily contiguous) - "mlbcen" still finds
+  // "Melbourne Central".
+  function isSubsequence(needle, haystack) {
+    let i = 0;
+    for (const char of haystack) {
+      if (char === needle[i]) i += 1;
+      if (i === needle.length) return true;
+    }
+    return needle.length === 0;
+  }
+
+  const byFuzzy = CBD_PLACES.filter((p) => isSubsequence(q, normalise(p.name))).sort((a, b) =>
+    a.name.localeCompare(b.name),
+  );
+  addAll(byFuzzy);
+
+  return results;
 }

@@ -84,7 +84,7 @@ export default function RouteResults() {
     <div className="mx-auto max-w-5xl">
       <PageHeader
         title="Route Results"
-        description="Compare your options - the calmest route is highlighted first."
+        description="Compare your options, ranked by crowd level and busiest reading - the top result is highlighted first."
       />
 
       {reevaluateError && (

@@ -1,14 +1,17 @@
 import { useEffect, useMemo } from 'react';
-import { MapContainer, TileLayer, Polyline, useMap } from 'react-leaflet';
+import { MapContainer, Polyline, useMap } from 'react-leaflet';
+import BaseTileLayer from './map/BaseTileLayer.jsx';
 import { BAND_COLORS } from '../utils/bandLabels.js';
 
 // Line pattern, not just colour, marks a band on the map - a screenshot in
-// greyscale still has to tell HIGH apart from the rest.
+// greyscale still has to tell HIGH apart from the rest. NO_DATA's grey is
+// the one colour at risk of blending into the pale Positron basemap, so it
+// gets the same weight as LOW/MEDIUM rather than a thinner line.
 const BAND_LINE_STYLE = {
   LOW: { color: BAND_COLORS.LOW, weight: 4 },
   MEDIUM: { color: BAND_COLORS.MEDIUM, weight: 4, dashArray: '10 6' },
   HIGH: { color: BAND_COLORS.HIGH, weight: 6, dashArray: '2 8' },
-  NO_DATA: { color: BAND_COLORS.NO_DATA, weight: 3, dashArray: '1 6' },
+  NO_DATA: { color: BAND_COLORS.NO_DATA, weight: 4, dashArray: '2 10' },
 };
 
 function toLatLngs(geometry) {
@@ -37,10 +40,7 @@ export default function RouteMap({ sections }) {
   return (
     <div className="h-72 overflow-hidden rounded-xl border border-ink/10 md:h-96">
       <MapContainer center={center} zoom={15} scrollWheelZoom={false} className="h-full w-full">
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
+        <BaseTileLayer />
         <FitBounds sections={sections} />
         {sections.map((section) => (
           <Polyline

@@ -133,7 +133,20 @@ export default function SensoryRefuges() {
 
       <RefugeFilter selected={selectedTypes} onChange={setSelectedTypes} counts={categoryCounts} />
 
-      {isLoading && <p className="mt-5 text-caption text-ink/60">Finding nearby refuges…</p>}
+      {isLoading && (
+        <div className="mt-5" aria-busy="true">
+          <p role="status" className="sr-only">
+            Finding nearby refuges…
+          </p>
+          <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2" aria-hidden="true">
+            {[0, 1].map((key) => (
+              <li key={key} className="h-full">
+                <Card className="h-32 animate-pulse bg-ink/5" />
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {!isLoading && refuges.length === 0 && (
         <Card className="mt-5 text-center" aria-describedby="refuges-sample-notice">
@@ -155,7 +168,7 @@ export default function SensoryRefuges() {
                 Showing refuges within {searchRadiusMetres} m of {location.name}.
               </p>
             )}
-            <div className="grid grid-cols-1 gap-3 md:grid-cols-[1fr,220px]">
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-[1fr,minmax(220px,auto)]">
               <RefugeMap
                 location={location}
                 refuges={refuges}
@@ -170,8 +183,8 @@ export default function SensoryRefuges() {
               {refuges.map((refuge) => {
                 const isOpen = selectedRefugeId === refuge.id;
                 return (
-                  <li key={refuge.id}>
-                    <Card>
+                  <li key={refuge.id} className="h-full">
+                    <Card className="flex h-full flex-col">
                       <button
                         type="button"
                         onClick={() => handleSelectRefuge(refuge)}
@@ -183,7 +196,9 @@ export default function SensoryRefuges() {
                           category={refuge.category}
                           className="h-5 w-5 flex-shrink-0 text-accent"
                         />
-                        <span className="font-semibold text-ink">{refuge.name}</span>
+                        <span className="min-w-0 break-words font-semibold text-ink">
+                          {refuge.name}
+                        </span>
                       </button>
                       <p className="mt-1 text-caption text-ink/70">
                         {refugeCategoryLabel(refuge.category)} ·{' '}

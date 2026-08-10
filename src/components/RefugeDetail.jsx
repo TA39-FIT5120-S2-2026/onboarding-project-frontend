@@ -11,8 +11,10 @@ export default function RefugeDetail({ refuge }) {
         <dd className="font-medium text-ink">{refugeCategoryLabel(refuge.category)}</dd>
       </div>
       <div className="flex justify-between gap-2">
-        <dt className="text-ink/60">Address</dt>
-        <dd className="text-right font-medium text-ink">{orUnavailable(refuge.address)}</dd>
+        <dt className="flex-shrink-0 text-ink/60">Address</dt>
+        <dd className="min-w-0 break-words text-right font-medium text-ink">
+          {orUnavailable(refuge.address)}
+        </dd>
       </div>
       <div className="flex justify-between gap-2">
         <dt className="text-ink/60">Walking distance</dt>

@@ -17,10 +17,40 @@ worth fixing on the backend, for whoever picks it up next.
 ## Open items, most impactful first
 
 1. **`GET /api/refuges` and `GET /api/forecast` do not exist at all.**
-   No controller, service, route, or DB table for either. The frontend
-   currently serves bundled sample JSON for both pages, with a visible
-   "Sample data" notice so it's never mistaken for live data. AC 2.1.x and
-   2.2.x are only demo-able against sample data until these are built.
+   No controller, service, or route for either. The frontend currently
+   serves bundled sample JSON for both pages, with a visible "Sample data"
+   notice so it's never mistaken for live data. AC 2.1.x and 2.2.x are only
+   demo-able against sample data until these are built.
+   - **Refuges is cheap to add.** The `landmarks` table is already seeded
+     (242 rows). Inside the CBD polygon: 12 parks/gardens, 10
+     galleries/museums, but only **2 libraries** (Athenaeum + State Library) -
+     the library filter will look sparse until a richer source is added.
+     Only the endpoint is missing.
+   - **Forecast is not cheap.** No endpoint *and* no data: only ~2.5 days of
+     `pedestrian_counts` are imported (checked directly against the seeded
+     DB). A credible next-hour prediction needs day-of-week × hour-of-day
+     patterns from the Counts-per-Hour historical dataset over weeks.
+     Shipping a forecast off 2.5 days would overstate confidence -
+     `docs/ACCESSIBILITY.md` is explicit that this destroys trust with this
+     user group, so the frontend deliberately does not attempt it.
+
+2. **Ranking prioritises the single busiest sensor reading over average
+   exposure**, which can make a poorly-covered route "Recommended" over a
+   well-covered one. Probed directly against the live backend
+   (`routeRankingService.js:9-82`, State Library → Town Hall):
+
+   | rank | route | band | avg | peak | sensors | recommended |
+   |---|---|---|---|---|---|---|
+   | 1 | 3 | MEDIUM | 69 | 69 | **1** | yes |
+   | 2 | 2 | MEDIUM | **36** | 86 | 7 | no |
+
+   Route 3 wins on a technicality (its one sensor's peak is lower) despite
+   having far less coverage and a higher average than route 2. The frontend
+   now shows average, peak and sensor count on every route card
+   (`RouteExposureStats.jsx`) rather than re-ranking client-side, so this is
+   visible instead of hidden - but ranking by average (or by average with
+   sensor-count as a tiebreaker) would likely produce more trustworthy
+   recommendations.
 
 2. **`NO_DATA` radius is 50m, not the 200m originally specified.**
    `SENSOR_ROUTE_RADIUS_METERS` in the backend `.env` defaults to 50. One-line

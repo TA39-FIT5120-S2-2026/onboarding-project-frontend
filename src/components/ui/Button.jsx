@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 
 const VARIANTS = {
   primary: 'bg-accent text-white hover:bg-accent-dark',
-  secondary: 'border border-ink/20 bg-white text-ink hover:border-accent hover:text-accent',
+  secondary: 'border border-ink/15 bg-white text-ink hover:border-accent hover:text-accent',
   ghost: 'text-accent hover:underline underline-offset-2',
 };
 

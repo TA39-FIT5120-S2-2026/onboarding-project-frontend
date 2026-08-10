@@ -527,5 +527,6 @@ assumes. Full detail in `docs/BACKEND_GAPS.md`.
 |---|---|
 | `API_CONTRACT.md` | Endpoint shapes and field names. Identical in both repos |
 | `BACKEND_GAPS.md` | Deviations between this file's assumptions and the backend as built |
+| `PLACE_DATA.md` | Where the location picker's place list comes from and how to regenerate it |
 | `DATA_MODEL.md` | Database schema and queries (backend only) |
 | `ACCESSIBILITY.md` | WCAG AA requirements (frontend only) |

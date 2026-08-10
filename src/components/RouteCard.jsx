@@ -1,5 +1,6 @@
 import { Footprints } from 'lucide-react';
 import IndicatorDetail from './IndicatorDetail.jsx';
+import RouteExposureStats from './RouteExposureStats.jsx';
 import RecommendedBadge from './RecommendedBadge.jsx';
 import Card from './ui/Card.jsx';
 import Stat from './ui/Stat.jsx';
@@ -22,21 +23,26 @@ export default function RouteCard({ route, reason, onSelect }) {
       />
 
       <div className="mt-3">
-        <IndicatorDetail routeId={route.routeId} exposure={route.exposure} />
+        <IndicatorDetail routeId={route.routeId} exposure={route.exposure} showCount={false} />
+      </div>
+
+      <div className="mt-3 border-t border-ink/10 pt-3">
+        <RouteExposureStats exposure={route.exposure} />
       </div>
 
       {reason && <p className="mt-3 text-caption text-ink/70">{reason}</p>}
 
       {onSelect && (
-        <Button
-          type="button"
-          onClick={() => onSelect(route)}
-          variant={route.recommended ? 'primary' : 'secondary'}
-          fullWidth
-          className="mt-auto pt-4"
-        >
-          Select this route
-        </Button>
+        <div className="mt-auto pt-4">
+          <Button
+            type="button"
+            onClick={() => onSelect(route)}
+            variant={route.recommended ? 'primary' : 'secondary'}
+            fullWidth
+          >
+            Select this route
+          </Button>
+        </div>
       )}
     </Card>
   );

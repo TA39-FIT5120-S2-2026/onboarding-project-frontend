@@ -7,14 +7,26 @@ const routes = [
     routeId: 1,
     duration: { seconds: 600, minutes: 10 },
     distance: { meters: 700, kilometres: 0.7 },
-    exposure: { sensoryBand: 'LOW', averagePedestrianCount: 38, sensors: [] },
+    exposure: {
+      sensoryBand: 'LOW',
+      averagePedestrianCount: 38,
+      maximumPedestrianCount: 50,
+      matchedSensorCount: 3,
+      sensors: [],
+    },
     recommended: true,
   },
   {
     routeId: 2,
     duration: { seconds: 480, minutes: 8 },
     distance: { meters: 500, kilometres: 0.5 },
-    exposure: { sensoryBand: 'MEDIUM', averagePedestrianCount: 54, sensors: [] },
+    exposure: {
+      sensoryBand: 'MEDIUM',
+      averagePedestrianCount: 54,
+      maximumPedestrianCount: 70,
+      matchedSensorCount: 4,
+      sensors: [],
+    },
     recommended: false,
   },
 ];

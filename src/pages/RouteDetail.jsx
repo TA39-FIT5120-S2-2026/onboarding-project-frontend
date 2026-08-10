@@ -1,5 +1,6 @@
+import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Footprints, Info, MapPinOff } from 'lucide-react';
+import { ArrowLeft, ChevronDown, Footprints, Info, MapPinOff } from 'lucide-react';
 import { useSession } from '../context/SessionContext.jsx';
 import SensoryIndicator from '../components/SensoryIndicator.jsx';
 import ToleranceWarning from '../components/ToleranceWarning.jsx';
@@ -11,10 +12,13 @@ import Card from '../components/ui/Card.jsx';
 import Stat from '../components/ui/Stat.jsx';
 import Section from '../components/ui/Section.jsx';
 import Button from '../components/ui/Button.jsx';
+import PageHeader from '../components/ui/PageHeader.jsx';
 import { BAND_COLORS } from '../utils/bandLabels.js';
 import { formatDistance, formatDuration } from '../utils/format.js';
+import { mergeSections } from '../utils/routeSections.js';
 
 const ATTRIBUTION = 'City of Melbourne, CC BY 4.0';
+const NAMED_SENSORS_SHOWN = 2;
 
 const MAP_LEGEND_ITEMS = [
   { label: 'Low', lineStyle: { color: BAND_COLORS.LOW } },
@@ -23,11 +27,21 @@ const MAP_LEGEND_ITEMS = [
   { label: 'No sensor data', lineStyle: { color: BAND_COLORS.NO_DATA, pattern: 'dashed' } },
 ];
 
+function stretchLabel(stretch) {
+  if (stretch.sensors.length === 0) {
+    return 'No sensor on this stretch, so the crowd level here is unknown.';
+  }
+  const shown = stretch.sensors.slice(0, NAMED_SENSORS_SHOWN);
+  const remaining = stretch.sensors.length - shown.length;
+  return { shown, remaining };
+}
+
 export default function RouteDetail() {
   const { routeId } = useParams();
   const navigate = useNavigate();
   const { session, setSelectedRouteId } = useSession();
   const route = session.routes.find((r) => String(r.routeId) === routeId);
+  const [showDirections, setShowDirections] = useState(false);
 
   const backLink = (
     <Link
@@ -62,6 +76,7 @@ export default function RouteDetail() {
     : null;
 
   const directionSteps = route.segments.flatMap((segment) => segment.steps ?? []);
+  const stretches = mergeSections(route.routeSections);
 
   function handleSwitch(altRoute) {
     setSelectedRouteId(altRoute.routeId);
@@ -70,15 +85,17 @@ export default function RouteDetail() {
 
   return (
     <div className="mx-auto max-w-3xl">
-      {backLink}
-      <h1 className="text-display-sm text-ink">Route Detail</h1>
-      {session.origin && session.destination && (
-        <p className="mt-1 text-caption text-ink/60">
-          {session.origin.name} → {session.destination.name}
-        </p>
-      )}
+      <PageHeader
+        back={backLink}
+        title="Route Detail"
+        eyebrow={
+          session.origin && session.destination
+            ? `${session.origin.name} → ${session.destination.name}`
+            : undefined
+        }
+      />
 
-      <Card className="mt-4">
+      <Card>
         <div className="flex flex-wrap items-start justify-between gap-3">
           <Stat
             icon={Footprints}
@@ -126,7 +143,7 @@ export default function RouteDetail() {
           Busier sections are thicker and dotted, not just a different colour - also listed as text
           below.
         </p>
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-[1fr,220px]">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-[1fr,minmax(220px,auto)]">
           <RouteMap sections={route.routeSections} />
           <MapLegend items={MAP_LEGEND_ITEMS} />
         </div>
@@ -135,23 +152,36 @@ export default function RouteDetail() {
       <Section title="Crowd sections">
         <Card>
           <ul className="space-y-3">
-            {route.routeSections.map((section) => (
-              <li
-                key={section.sectionId}
-                className="flex flex-wrap items-center justify-between gap-2 border-t border-ink/5 pt-3 first:border-t-0 first:pt-0"
-              >
-                <span className="font-medium text-ink">
-                  {section.sensors.length > 0
-                    ? section.sensors.map((sensor) => sensor.name).join(', ')
-                    : `Section ${section.sectionId}`}
-                </span>
-                <SensoryIndicator
-                  band={section.sensoryBand}
-                  countPerMinute={section.averagePedestrianCount}
-                  showCount={false}
-                />
-              </li>
-            ))}
+            {stretches.map((stretch, index) => {
+              const label = stretchLabel(stretch);
+              return (
+                <li
+                  key={stretch.key}
+                  className="flex flex-wrap items-start justify-between gap-2 border-t border-ink/5 pt-3 first:border-t-0 first:pt-0"
+                >
+                  <div className="min-w-0 flex-1">
+                    <p className="text-micro font-semibold uppercase tracking-wide text-ink/50">
+                      Stretch {index + 1} of {stretches.length} · {formatDistance(stretch.distanceMeters)}
+                    </p>
+                    {typeof label === 'string' ? (
+                      <p className="mt-0.5 break-words text-caption text-ink/70">{label}</p>
+                    ) : (
+                      <ul className="mt-0.5">
+                        {label.shown.map((sensor) => (
+                          <li key={sensor.locationId} className="break-words font-medium text-ink">
+                            {sensor.name}
+                          </li>
+                        ))}
+                        {label.remaining > 0 && (
+                          <li className="text-caption text-ink/60">+{label.remaining} more</li>
+                        )}
+                      </ul>
+                    )}
+                  </div>
+                  <SensoryIndicator band={stretch.sensoryBand} countPerMinute={null} showCount={false} />
+                </li>
+              );
+            })}
           </ul>
           <p className="mt-3 text-micro text-ink/50">{route.exposure.dataSource ?? ATTRIBUTION}</p>
         </Card>
@@ -163,16 +193,36 @@ export default function RouteDetail() {
             Directions come from the routing service and are measured separately from the crowd
             sections above, so no crowd band is shown here.
           </p>
-          <Card>
-            <ol className="space-y-2">
-              {directionSteps.map((step, index) => (
-                <li key={index} className="text-caption text-ink">
-                  {step.instruction}
-                  {step.name && step.name !== '-' ? ` (${step.name})` : ''}
-                </li>
-              ))}
-            </ol>
-          </Card>
+          <div>
+            <button
+              type="button"
+              onClick={() => setShowDirections((prev) => !prev)}
+              aria-expanded={showDirections}
+              aria-controls="walking-directions-panel"
+              className="flex w-full items-center justify-between gap-2 rounded-lg border border-ink/15 bg-white px-3.5 py-3 text-left text-caption font-medium text-ink"
+            >
+              {showDirections
+                ? 'Hide walking directions'
+                : `Show ${directionSteps.length} walking steps`}
+              <ChevronDown
+                className={`h-4 w-4 flex-shrink-0 transition-transform ${showDirections ? 'rotate-180' : ''}`}
+                aria-hidden="true"
+              />
+            </button>
+            {showDirections && (
+              <Card as="div" id="walking-directions-panel" padding="sm" className="mt-2">
+                <ol className="space-y-2">
+                  {directionSteps.map((step, index) => (
+                    <li key={index} className="text-caption text-ink">
+                      {step.instruction}
+                      {step.name && step.name !== '-' ? ` (${step.name})` : ''} ·{' '}
+                      <span className="text-ink/60">{formatDistance(step.distance)}</span>
+                    </li>
+                  ))}
+                </ol>
+              </Card>
+            )}
+          </div>
         </Section>
       )}
     </div>

@@ -1,5 +1,6 @@
 import { useRef } from 'react';
 import { X } from 'lucide-react';
+import Button from './ui/Button.jsx';
 import { useFocusTrap } from '../hooks/useFocusTrap.js';
 import { CHECK_IN_OPTIONS } from '../utils/tolerance.js';
 
@@ -24,20 +25,22 @@ export default function CheckInModal({ isOpen, onSelect, onSkip, isBusy }) {
         role="dialog"
         aria-modal="true"
         aria-labelledby="checkin-heading"
-        className="relative w-full max-w-sm rounded-2xl bg-white p-5 shadow-xl"
+        className="relative w-full max-w-sm rounded-xl bg-white p-5 shadow-xl"
       >
         <div className="flex items-start justify-between gap-2">
           <h2 id="checkin-heading" className="text-heading-sm text-ink">
             How are you feeling today?
           </h2>
-          <button
+          <Button
             type="button"
+            variant="ghost"
+            size="sm"
             onClick={onSkip}
             aria-label="Close check-in"
-            className="rounded-full p-1 text-ink/60 hover:bg-ink/5 hover:text-ink"
+            className="rounded-full"
           >
             <X className="h-5 w-5" aria-hidden="true" />
-          </button>
+          </Button>
         </div>
         <p className="mt-1 text-caption text-ink/70">
           This helps us choose routes that match your sensitivity right now. Optional.
@@ -45,24 +48,28 @@ export default function CheckInModal({ isOpen, onSelect, onSkip, isBusy }) {
 
         <div className="mt-4 space-y-2">
           {CHECK_IN_OPTIONS.map((option) => (
-            <button
+            <Button
               key={option.id}
               type="button"
+              variant="secondary"
+              fullWidth
               disabled={isBusy}
               onClick={() => onSelect(option.tolerance)}
-              className="w-full rounded-lg border border-ink/15 px-4 py-3 text-left font-medium text-ink hover:border-accent hover:bg-accent/5 disabled:opacity-60"
+              className="justify-start"
             >
               {option.label}
-            </button>
+            </Button>
           ))}
-          <button
+          <Button
             type="button"
+            variant="secondary"
+            fullWidth
             disabled={isBusy}
             onClick={onSkip}
-            className="w-full rounded-lg border border-ink/15 px-4 py-3 text-left font-medium text-ink hover:border-accent hover:bg-accent/5 disabled:opacity-60"
+            className="justify-start"
           >
             Skip
-          </button>
+          </Button>
         </div>
       </div>
     </div>

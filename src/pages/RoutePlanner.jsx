@@ -110,7 +110,7 @@ export default function RoutePlanner() {
           <h1 className="text-display-sm text-ink">Quiet Compass</h1>
           <p className="mt-2 max-w-prose text-body text-ink/70">
             Walk Melbourne&apos;s CBD by crowd level, not just distance. We compare your route
-            options using real pedestrian counts and point you to the calmest one.
+            options using real pedestrian counts and show how busy each one is.
           </p>
 
           <form onSubmit={handleSubmit} className="mt-6 space-y-4" noValidate>

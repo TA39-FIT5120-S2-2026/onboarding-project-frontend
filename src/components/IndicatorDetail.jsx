@@ -2,11 +2,15 @@ import { useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 import SensoryIndicator from './SensoryIndicator.jsx';
 import BandIcon from './BandIcon.jsx';
+import Card from './ui/Card.jsx';
 import { formatCount, formatTime } from '../utils/format.js';
 
 const ATTRIBUTION = 'City of Melbourne, CC BY 4.0';
 
-export default function IndicatorDetail({ routeId, exposure }) {
+// showCount hides the redundant average-count text when a caller (RouteCard)
+// already shows it via RouteExposureStats right below - otherwise the same
+// number prints twice on one card.
+export default function IndicatorDetail({ routeId, exposure, showCount = true }) {
   const [isOpen, setIsOpen] = useState(false);
   const panelId = `indicator-detail-${routeId}`;
 
@@ -19,7 +23,11 @@ export default function IndicatorDetail({ routeId, exposure }) {
         aria-controls={panelId}
         className="flex w-full flex-wrap items-center justify-between gap-2 rounded-lg text-left"
       >
-        <SensoryIndicator band={exposure.sensoryBand} countPerMinute={exposure.averagePedestrianCount} />
+        <SensoryIndicator
+          band={exposure.sensoryBand}
+          countPerMinute={exposure.averagePedestrianCount}
+          showCount={showCount}
+        />
         <span className="flex items-center gap-1 text-micro font-medium text-accent">
           {isOpen ? 'Hide sensor detail' : 'Sensor detail'}
           <ChevronDown
@@ -30,7 +38,7 @@ export default function IndicatorDetail({ routeId, exposure }) {
       </button>
 
       {isOpen && (
-        <div id={panelId} className="mt-2 rounded-lg border border-ink/10 bg-white p-3">
+        <Card as="div" id={panelId} padding="sm" className="mt-2">
           {exposure.sensors.length === 0 ? (
             <p className="flex items-center gap-1.5 text-caption text-ink/70">
               <BandIcon shape="dash" className="h-3.5 w-3.5" />
@@ -50,7 +58,7 @@ export default function IndicatorDetail({ routeId, exposure }) {
             </ul>
           )}
           <p className="mt-3 text-micro text-ink/50">{exposure.dataSource ?? ATTRIBUTION}</p>
-        </div>
+        </Card>
       )}
     </div>
   );

@@ -12,7 +12,7 @@ No login. No accounts. Nothing stored beyond the browser session.
 |---|---|
 | Framework | React 18 + Vite |
 | Routing | React Router |
-| Map | Leaflet via react-leaflet |
+| Map | Leaflet via react-leaflet, CARTO Positron basemap (`src/components/map/BaseTileLayer.jsx`) - deliberately paler and lower-detail than standard OSM tiles, so route/refuge overlays read clearly against a calm base |
 | HTTP | fetch, wrapped in `src/api/` |
 | State | React context for session state, no Redux |
 | Styling | Tailwind CSS, meets WCAG AA |
@@ -71,21 +71,25 @@ src/
   components/
     ui/                          Design-system primitives, reused across all 5 pages
       Button.jsx                 Polymorphic: renders <Link> when given `to`, else <button>
-      Card.jsx
+      Card.jsx                   `padding="md"|"sm"` variants
       Stat.jsx                   Big number + small label (the "attractive number" pattern)
       PageHeader.jsx
       Section.jsx
       Callout.jsx                Shared shape for every warning/info box (role passed by caller)
     layout/
-      AppShell.jsx               Skip link, mobile top bar, <main>
-      NavBar.jsx                 Bottom tabs <md, left rail >=md, with icons + privacy note
+      AppShell.jsx               Skip link, mobile top bar, <main>, mobile PrivacyNote
+      NavBar.jsx                 Bottom tabs <md, left rail >=md, with icons + PrivacyNote
+      PrivacyNote.jsx            "Session only" promise - shared so it's never desktop-only
       StartOverButton.jsx        Resets session state, with a confirm prompt
+    map/
+      BaseTileLayer.jsx          CARTO Positron tiles, shared by RouteMap and RefugeMap
     SensoryIndicator.jsx         Low / Medium / High badge
     BandIcon.jsx                 Shape per band (circle/triangle/square/dash)
     BandExplainer.jsx            "How we rate crowd levels" - homepage band walkthrough
     FeatureTeaserCards.jsx       Homepage teaser cards linking to Refuges and Forecast
     IndicatorDetail.jsx          Expandable sensor detail
     RouteCard.jsx
+    RouteExposureStats.jsx       Average / peak / sensor-coverage row (ranking honesty)
     RouteComparisonList.jsx
     RecommendedBadge.jsx
     BandLegend.jsx
@@ -101,11 +105,10 @@ src/
     RefugeMarker.jsx
     RefugeIcon.jsx
     RefugeDetail.jsx
-    RefugeFilter.jsx             Chip-style type filter with a per-category count
+    RefugeFilter.jsx             Chip-style type filter, "All types" + a per-category count
     LocationPinIcon.jsx
     ForecastTimeline.jsx
-    EstimateDisclaimer.jsx
-    PlaceCombobox.jsx            Labelled type-ahead over cbdPlaces
+    PlaceCombobox.jsx            Hand-built ARIA combobox: prefix + fuzzy match, keyboard nav
     SampleDataNotice.jsx         "Sample data" callout for Refuges/Forecast (no backend for either)
     FieldError.jsx
     __tests__/
@@ -120,16 +123,26 @@ src/
     forecast.js                  always serves bundled sample data - no backend endpoint exists
     __fixtures__/                route-plan fixture + fixture switch, used when VITE_USE_FIXTURES=true
   data/
-    cbdPlaces.js                 Static named-place list standing in for a geocoder
+    cbdPlaces.js                 Combines generated + colloquial + out-of-coverage places; search
+    cbdPlaces.generated.js       GENERATED - see docs/PLACE_DATA.md, never hand-edited
+    __tests__/
+  theme/
+    colors.js                    Single source of colour hexes - tailwind.config.js imports this
   hooks/
     useFocusTrap.js               Focus trap + Escape + focus-return for CheckInModal
   utils/
-    bandLabels.js                 Display strings, icons and colours per band
-    tolerance.js                  Check-in options, tolerance comparison
+    bandLabels.js                 Display strings and icons per band; colours re-exported from theme/
+    tolerance.js                  Check-in options
     format.js                     Distance/duration/count/time formatting
     refugeCategories.js           Labels, colours and shapes per refuge category
+    routeSections.js              Presentation-only merge of adjacent same-band crowd sections
+    __tests__/
   test/
     setup.jsx                     jest-dom matchers + global react-leaflet mock
+
+scripts/
+  generate-cbd-places.mjs        Dev-only. Regenerates cbdPlaces.generated.js - see docs/PLACE_DATA.md
+  placeOverrides.js               Curated additions/exclusions, shared with the runtime place list
 ```
 
 ---
@@ -167,7 +180,7 @@ Decisions made while building where the docs did not specify an approach. Confir
 
 | Gap | Decision |
 |---|---|
-| `API_CONTRACT.md` takes `origin`/`destination` as `lat,lng`, but there is no geocoding endpoint | `src/data/cbdPlaces.js` - a static list of ~20 named Melbourne CBD landmarks with coordinates. Origin/destination/refuge-location/forecast-location fields are all a labelled `PlaceCombobox` (native `<input list>` + `<datalist>`) over this list. A handful of real Melbourne landmarks outside the CBD bounding box are included deliberately so AC 1.1.1 Scenario 3 is reachable from the combobox. |
+| The backend takes `origin`/`destination` as coordinates, but there is no geocoding endpoint - and a third-party geocoder would send what the user types off-device | `src/data/cbdPlaces.js` - real City of Melbourne landmarks, verified against the backend's actual CBD polygon and generated by `scripts/generate-cbd-places.mjs` (see `docs/PLACE_DATA.md`). Origin/destination/refuge-location/forecast-location fields are all a labelled `PlaceCombobox` - a hand-built ARIA combobox with prefix and fuzzy matching, not native `<datalist>` (which can't fuzzy-match or expose `aria-activedescendant`). A handful of real Melbourne landmarks outside the backend's CBD polygon are included deliberately so AC 1.1.1 Scenario 3 is reachable from the combobox. |
 | Forecast's "area or sensor location" selector has no backing endpoint | Same `cbdPlaces.js`; calls `GET /api/forecast?lat=&lng=`, not `sensorId`. |
 | AC 2.2.1 requires predicted values "visually distinguished from live readings", but `GET /api/forecast` returns predictions only | Live = `averageCountPerMinute` of `session.lastSelectedRoute`, drawn as a solid "Now" bar with its value shown as text. Predicted bars are outlined/dashed and tagged "est.". No active route this session -> no "Now" bar, predicted-only timeline. |
 | No test framework specified, but AC 1.1.2 task 4 requires boundary tests | Vitest + React Testing Library + jsdom. `react-leaflet` is mocked globally in `src/test/setup.jsx` - jsdom cannot run Leaflet's real SVG renderer. |
