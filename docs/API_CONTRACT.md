@@ -253,8 +253,9 @@ Covers AC 1.1.1, 1.1.2, 1.2.1, 1.2.2, 1.2.3, 1.3.1, 1.3.2, 1.3.3.
 # Not implemented
 
 These were part of an earlier proposed contract. The backend does not
-implement them; the frontend serves bundled sample data instead, labelled
-with a visible "Sample data" notice.
+implement them; the frontend serves bundled sample data instead. **No
+visible notice distinguishes it from live data** - see `docs/ACCESSIBILITY.md`
+and `docs/BACKEND_GAPS.md`.
 
 | Endpoint | Frontend fallback |
 |---|---|

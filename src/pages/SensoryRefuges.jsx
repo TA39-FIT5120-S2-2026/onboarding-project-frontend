@@ -8,7 +8,6 @@ import RefugeIcon from '../components/RefugeIcon.jsx';
 import RefugeDetail from '../components/RefugeDetail.jsx';
 import RefugeFilter from '../components/RefugeFilter.jsx';
 import LocationPinIcon from '../components/LocationPinIcon.jsx';
-import SampleDataNotice from '../components/SampleDataNotice.jsx';
 import PageHeader from '../components/ui/PageHeader.jsx';
 import Card from '../components/ui/Card.jsx';
 import Button from '../components/ui/Button.jsx';
@@ -102,9 +101,6 @@ export default function SensoryRefuges() {
           title="Sensory Refuges"
           description="Choose a location to find nearby parks, libraries and quiet spaces."
         />
-        <div className="mb-4">
-          <SampleDataNotice />
-        </div>
         <Card>
           <form onSubmit={handleLocationSubmit} className="space-y-4" noValidate>
             <PlaceCombobox
@@ -127,10 +123,6 @@ export default function SensoryRefuges() {
     <div className="mx-auto max-w-5xl">
       <PageHeader title="Sensory Refuges" eyebrow={`Near ${location.name}`} />
 
-      <div className="mb-4">
-        <SampleDataNotice id="refuges-sample-notice" />
-      </div>
-
       <RefugeFilter selected={selectedTypes} onChange={setSelectedTypes} counts={categoryCounts} />
 
       {isLoading && (
@@ -149,7 +141,7 @@ export default function SensoryRefuges() {
       )}
 
       {!isLoading && refuges.length === 0 && (
-        <Card className="mt-5 text-center" aria-describedby="refuges-sample-notice">
+        <Card className="mt-5 text-center">
           <SearchX className="mx-auto h-8 w-8 text-ink/30" aria-hidden="true" />
           <p className="mt-3 font-semibold text-ink">
             No refuges of the selected types were found nearby.

@@ -18,9 +18,11 @@ worth fixing on the backend, for whoever picks it up next.
 
 1. **`GET /api/refuges` and `GET /api/forecast` do not exist at all.**
    No controller, service, or route for either. The frontend currently
-   serves bundled sample JSON for both pages, with a visible "Sample data"
-   notice so it's never mistaken for live data. AC 2.1.x and 2.2.x are only
-   demo-able against sample data until these are built.
+   serves bundled sample JSON for both pages **with no visible indication
+   it's sample data** - the earlier "Sample data" notice was removed on an
+   explicit product decision, so a user cannot currently tell these pages
+   apart from live data. See `docs/ACCESSIBILITY.md`. AC 2.1.x and 2.2.x are
+   only demo-able against sample data until these are built.
    - **Refuges is cheap to add.** The `landmarks` table is already seeded
      (242 rows). Inside the CBD polygon: 12 parks/gardens, 10
      galleries/museums, but only **2 libraries** (Athenaeum + State Library) -

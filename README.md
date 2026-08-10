@@ -2,6 +2,8 @@
 
 React + Vite web app helping neurodivergent and sensory-sensitive adults navigate Melbourne CBD by sensory load rather than speed.
 
+**Live:** https://effulgent-cendol-d63bd1.netlify.app/
+
 No login. No accounts. Nothing stored beyond the browser session.
 
 ---
@@ -131,7 +133,6 @@ src/
     LocationPinIcon.jsx
     ForecastTimeline.jsx
     PlaceCombobox.jsx            Hand-built ARIA combobox: prefix + fuzzy match, keyboard nav
-    SampleDataNotice.jsx         "Sample data" callout for Refuges/Forecast (no backend for either)
     FieldError.jsx
     __tests__/
   context/
@@ -335,8 +336,10 @@ Appears once, when a route is selected on Route Results.
 
 **Covers AC 2.1.1, AC 2.1.2, AC 2.1.3**
 
-**Sample data.** No backend endpoint exists (`docs/BACKEND_GAPS.md`); the page
-always shows bundled sample locations behind a visible "Sample data" notice.
+**Sample data, no on-page notice.** No backend endpoint exists
+(`docs/BACKEND_GAPS.md`); the page always shows bundled sample locations.
+An earlier "Sample data" disclosure was removed on an explicit product
+decision - see `docs/ACCESSIBILITY.md`.
 
 - Map with refuge markers within 500m, visually distinct from route markers, with a legend
 - Type filter: park, library, quiet space
@@ -352,8 +355,10 @@ If no route is active, prompt for a location before searching.
 
 **Covers AC 2.2.1, AC 2.2.2**
 
-**Sample data.** No backend endpoint exists (`docs/BACKEND_GAPS.md`); the page
-always shows a bundled sample forecast behind a visible "Sample data" notice.
+**Sample data, no on-page notice.** No backend endpoint exists
+(`docs/BACKEND_GAPS.md`); the page always shows a bundled sample forecast.
+An earlier "Sample data" disclosure was removed on an explicit product
+decision - see `docs/ACCESSIBILITY.md`.
 
 - Area or sensor selector
 - Timeline of predicted counts for the next 60 minutes

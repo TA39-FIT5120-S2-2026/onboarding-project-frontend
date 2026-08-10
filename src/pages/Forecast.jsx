@@ -4,7 +4,6 @@ import { useSession } from '../context/SessionContext.jsx';
 import PlaceCombobox from '../components/PlaceCombobox.jsx';
 import ForecastTimeline from '../components/ForecastTimeline.jsx';
 import SensoryIndicator from '../components/SensoryIndicator.jsx';
-import SampleDataNotice from '../components/SampleDataNotice.jsx';
 import Callout from '../components/ui/Callout.jsx';
 import PageHeader from '../components/ui/PageHeader.jsx';
 import Card from '../components/ui/Card.jsx';
@@ -55,9 +54,6 @@ export default function Forecast() {
           title="Forecast"
           description="Choose an area or sensor location to see the next-hour forecast."
         />
-        <div className="mb-4">
-          <SampleDataNotice />
-        </div>
         <Card>
           <form onSubmit={handleLocationSubmit} className="space-y-4" noValidate>
             <PlaceCombobox
@@ -81,12 +77,8 @@ export default function Forecast() {
       <PageHeader title="Forecast" eyebrow={forecast?.sensorName ?? location.name} />
 
       <div className="mb-5">
-        <Callout tone="info" icon={Info} title="Sample data">
-          <p>
-            This page shows example locations for demonstration. It is not live information and no
-            backend service supplies it yet.
-          </p>
-          <p className="mt-1">Estimate based on historical patterns.</p>
+        <Callout tone="info" icon={Info}>
+          Estimate based on historical patterns.
         </Callout>
       </div>
 

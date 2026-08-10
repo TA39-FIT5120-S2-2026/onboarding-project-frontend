@@ -1,6 +1,6 @@
 // No backend implements GET /api/forecast (see docs/BACKEND_GAPS.md). This
 // always serves bundled sample data - never a network call - so the
-// Forecast page stays usable. SampleDataNotice tells the user it isn't live.
+// Forecast page stays usable.
 import forecastDefault from './__fixtures__/forecast.json';
 import forecastInsufficient from './__fixtures__/forecastInsufficient.json';
 
