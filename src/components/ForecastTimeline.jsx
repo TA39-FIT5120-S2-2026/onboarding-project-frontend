@@ -30,7 +30,7 @@ export default function ForecastTimeline({ timeline, liveCount }) {
           <div className="flex flex-1 flex-col items-center justify-end gap-1">
             <div
               className="w-full rounded-t bg-accent"
-              style={{ height: `${Math.max((liveCount / maxValue) * 100, 4)}%` }}
+              style={{ height: `${(liveCount / maxValue) * 100}%`, minHeight: 2 }}
             />
             <span className="text-micro font-medium text-ink">Now</span>
           </div>
@@ -42,7 +42,7 @@ export default function ForecastTimeline({ timeline, liveCount }) {
           >
             <div
               className="w-full rounded-t border-2 border-dashed border-ink/50 bg-ink/5"
-              style={{ height: `${Math.max((point.predictedCount / maxValue) * 100, 4)}%` }}
+              style={{ height: `${(point.predictedCount / maxValue) * 100}%`, minHeight: 2 }}
             />
             <span className="text-micro text-ink/60">+{point.minutesAhead}m</span>
           </div>

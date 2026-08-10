@@ -4,28 +4,38 @@ import RouteComparisonList from '../RouteComparisonList.jsx';
 
 const routes = [
   {
-    id: 'r1',
-    walkingTimeMinutes: 10,
-    distanceMetres: 700,
-    averageCountPerMinute: 38,
-    band: 'LOW',
+    routeId: 1,
+    duration: { seconds: 600, minutes: 10 },
+    distance: { meters: 700, kilometres: 0.7 },
+    exposure: {
+      sensoryBand: 'LOW',
+      averagePedestrianCount: 38,
+      maximumPedestrianCount: 50,
+      matchedSensorCount: 3,
+      sensors: [],
+    },
     recommended: true,
-    reason: 'Lowest pedestrian exposure of the available routes',
   },
   {
-    id: 'r2',
-    walkingTimeMinutes: 8,
-    distanceMetres: 500,
-    averageCountPerMinute: 54,
-    band: 'MEDIUM',
+    routeId: 2,
+    duration: { seconds: 480, minutes: 8 },
+    distance: { meters: 500, kilometres: 0.5 },
+    exposure: {
+      sensoryBand: 'MEDIUM',
+      averagePedestrianCount: 54,
+      maximumPedestrianCount: 70,
+      matchedSensorCount: 4,
+      sensors: [],
+    },
     recommended: false,
-    reason: 'Slightly shorter, moderate pedestrian exposure',
   },
 ];
 
+const decision = { message: 'Lowest pedestrian exposure of the available routes' };
+
 describe('RouteComparisonList (AC 1.2.1)', () => {
   it('shows time, pedestrian count and band together per route so the trade-off is visible', () => {
-    render(<RouteComparisonList routes={routes} />);
+    render(<RouteComparisonList routes={routes} decision={decision} />);
 
     const items = screen.getAllByRole('listitem');
     expect(items).toHaveLength(2);
@@ -40,7 +50,7 @@ describe('RouteComparisonList (AC 1.2.1)', () => {
   });
 
   it('AC 1.2.2: marks the lowest-exposure route Recommended, first, with a plain-language reason', () => {
-    render(<RouteComparisonList routes={routes} />);
+    render(<RouteComparisonList routes={routes} decision={decision} />);
 
     const items = screen.getAllByRole('listitem');
     expect(within(items[0]).getByText('Recommended')).toBeInTheDocument();

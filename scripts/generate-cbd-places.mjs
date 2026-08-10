@@ -1,0 +1,151 @@
+#!/usr/bin/env node
+// Dev-only. Regenerates src/data/cbdPlaces.generated.js from a City of
+// Melbourne landmarks dump, keeping only entries the backend's real CBD
+// polygon accepts. Never run in production; never bundled (scripts/ is
+// outside Tailwind's content globs and Vite's build entry).
+//
+// Usage: node scripts/generate-cbd-places.mjs --landmarks <path-to-json> [--api http://localhost:3000]
+//
+// The landmarks dump is NOT checked in. Export it yourself:
+//   docker exec -i qc-mysql mysql -uroot -p<password> onboarding_project -N -B -e "
+//     SELECT id, theme, sub_theme, feature_name, latitude, longitude
+//     FROM landmarks
+//     WHERE latitude BETWEEN -37.8230 AND -37.8050
+//       AND longitude BETWEEN 144.9480 AND 144.9780;" > landmarks.tsv
+// then convert tab-separated columns (id, theme, sub_theme, feature_name,
+// latitude, longitude) to the JSON array this script expects.
+//
+// See docs/PLACE_DATA.md for the full walkthrough.
+
+import { writeFileSync } from 'node:fs';
+import { THEME_ALLOWLIST, NAME_FIXUPS, MANUAL_EXCLUDE_IDS } from './placeOverrides.js';
+
+const args = process.argv.slice(2);
+function argValue(flag, fallback) {
+  const i = args.indexOf(flag);
+  return i === -1 ? fallback : args[i + 1];
+}
+
+const landmarksPath = argValue('--landmarks');
+const apiBase = argValue('--api', 'http://localhost:3000');
+const outPath = new URL('../src/data/cbdPlaces.generated.js', import.meta.url);
+
+if (!landmarksPath) {
+  console.error('Usage: node scripts/generate-cbd-places.mjs --landmarks <path.json> [--api <url>]');
+  process.exit(1);
+}
+
+// A known-good CBD anchor for the CBD-boundary check (backend validates a
+// pair, not a single point).
+const ANCHOR = { latitude: -37.8136, longitude: 144.9631 }; // Bourke Street Mall
+
+function slugify(name) {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '');
+}
+
+function applyFixups(name) {
+  return NAME_FIXUPS.reduce((acc, [pattern, replacement]) => acc.replace(pattern, replacement), name);
+}
+
+function haversineMetres(a, b) {
+  const R = 6371000;
+  const toRad = (d) => (d * Math.PI) / 180;
+  const dLat = toRad(b.lat - a.lat);
+  const dLng = toRad(b.lng - a.lng);
+  const lat1 = toRad(a.lat);
+  const lat2 = toRad(b.lat);
+  const h =
+    Math.sin(dLat / 2) ** 2 + Math.sin(dLng / 2) ** 2 * Math.cos(lat1) * Math.cos(lat2);
+  return 2 * R * Math.asin(Math.sqrt(h));
+}
+
+async function isInsideCbd(lat, lng) {
+  const response = await fetch(`${apiBase}/api/routes/validate`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ origin: ANCHOR, destination: { latitude: lat, longitude: lng } }),
+  });
+  const body = await response.json();
+  return body?.data?.destinationInsideCbd === true;
+}
+
+async function main() {
+  const raw = JSON.parse(await import('node:fs/promises').then((fs) => fs.readFile(landmarksPath, 'utf8')));
+
+  const excludeSet = new Set(MANUAL_EXCLUDE_IDS);
+  const candidates = raw
+    .filter((row) => !excludeSet.has(row.id))
+    .filter((row) => THEME_ALLOWLIST.includes(row.theme))
+    .map((row) => ({
+      name: applyFixups(row.feature_name.trim()),
+      lat: row.latitude,
+      lng: row.longitude,
+      theme: row.theme,
+    }));
+
+  // Dedupe by normalised name, then by proximity (<=40m) - the table has
+  // Parliament Station 3x, Flagstaff Station 2x etc at slightly different
+  // survey points for the same physical place.
+  const byName = new Map();
+  for (const c of candidates) {
+    const key = c.name.toLowerCase();
+    if (!byName.has(key)) byName.set(key, c);
+  }
+  const named = [...byName.values()];
+
+  const deduped = [];
+  for (const c of named) {
+    const nearDup = deduped.find((d) => haversineMetres(c, d) <= 40);
+    if (!nearDup) deduped.push(c);
+  }
+
+  console.log(`Candidates after theme filter: ${candidates.length}`);
+  console.log(`After name dedupe: ${named.length}`);
+  console.log(`After proximity dedupe: ${deduped.length}`);
+  console.log(`Validating each against ${apiBase} ...`);
+
+  const validated = [];
+  for (const place of deduped) {
+    // Sequential with a small delay - this hits a dev server, not a load test.
+    const inside = await isInsideCbd(place.lat, place.lng);
+    if (inside) validated.push(place);
+    await new Promise((resolve) => setTimeout(resolve, 50));
+  }
+
+  console.log(`Inside the CBD polygon: ${validated.length}`);
+  console.log(`Excluded (outside polygon): ${deduped.length - validated.length}`);
+
+  validated.sort((a, b) => a.name.localeCompare(b.name));
+
+  const entries = validated.map((p) => ({
+    id: slugify(p.name),
+    name: p.name,
+    lat: Number(p.lat.toFixed(4)),
+    lng: Number(p.lng.toFixed(4)),
+  }));
+
+  const seenIds = new Set();
+  const deduplicatedById = entries.filter((e) => {
+    if (seenIds.has(e.id)) return false;
+    seenIds.add(e.id);
+    return true;
+  });
+
+  const fileContents = `// GENERATED by scripts/generate-cbd-places.mjs on ${new Date().toISOString().slice(0, 10)}
+// ${raw.length} landmarks in, ${deduplicatedById.length} validated inside the CBD polygon.
+// Do not hand-edit - see docs/PLACE_DATA.md to regenerate.
+
+export const GENERATED_CBD_PLACES = ${JSON.stringify(deduplicatedById, null, 2)};
+`;
+
+  writeFileSync(outPath, fileContents);
+  console.log(`Wrote ${deduplicatedById.length} places to ${outPath.pathname}`);
+}
+
+main().catch((error) => {
+  console.error(error);
+  process.exit(1);
+});

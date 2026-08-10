@@ -1,6 +1,7 @@
 import { NavLink } from 'react-router-dom';
-import { Compass, TreePine, CloudSun, ShieldCheck } from 'lucide-react';
+import { Compass, TreePine, CloudSun } from 'lucide-react';
 import StartOverButton from './StartOverButton.jsx';
+import PrivacyNote from './PrivacyNote.jsx';
 
 const LINKS = [
   { to: '/', label: 'Route', end: true, icon: Compass },
@@ -72,10 +73,7 @@ export default function NavBar() {
 
         <StartOverButton className="mt-auto flex items-center gap-3 rounded-lg px-3 py-2.5 text-caption font-medium text-ink/60 hover:bg-ink/5 hover:text-ink" />
 
-        <div className="mt-4 flex items-start gap-2 rounded-lg bg-accent/5 p-3 text-micro text-ink/70">
-          <ShieldCheck className="mt-0.5 h-4 w-4 flex-shrink-0 text-accent" aria-hidden="true" />
-          <span>Session only. Nothing is saved after you close this tab.</span>
-        </div>
+        <PrivacyNote className="mt-4" />
       </div>
     </nav>
   );

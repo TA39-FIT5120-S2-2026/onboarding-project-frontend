@@ -1,6 +1,7 @@
 import { Compass } from 'lucide-react';
 import NavBar from './NavBar.jsx';
 import StartOverButton from './StartOverButton.jsx';
+import PrivacyNote from './PrivacyNote.jsx';
 
 export default function AppShell({ children }) {
   return (
@@ -24,7 +25,10 @@ export default function AppShell({ children }) {
         className="flex-1 px-4 pb-28 pt-6 md:px-10 md:pb-12 md:pt-10"
         tabIndex={-1}
       >
-        <div className="mx-auto w-full max-w-6xl">{children}</div>
+        <div className="mx-auto w-full max-w-6xl">
+          {children}
+          <PrivacyNote className="mt-8 md:hidden" />
+        </div>
       </main>
     </div>
   );

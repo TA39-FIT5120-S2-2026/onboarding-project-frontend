@@ -95,7 +95,7 @@ For a sensory-sensitive audience, this matters more than usual.
 
 - Every input has a visible `<label>`, not just placeholder text
 - Errors are announced and linked to the field with `aria-describedby`
-- Error messages are plain language: "That location is outside the Melbourne CBD area we cover", not "OUT_OF_BOUNDS"
+- Error messages are plain language: "Origin and destination must be within Melbourne CBD.", not an error code
 - Never rely on colour to mark an invalid field
 
 ---
@@ -151,6 +151,7 @@ What has actually been verified, and what still needs a human with a browser and
 | Warnings use `role="alert"` | `CrowdWarning`, `ToleranceWarning`, `NoQualifyingRouteMessage`, `PredictiveAlert` all render through the shared `Callout` primitive with `role="alert"` passed explicitly by the caller; inline form errors too; asserted in their tests | Automated |
 | Map markers have accessible names | `RefugeMarker` sets a real `aria-label` + `role="button"` on the Leaflet marker element via `getElement()`, not just the divIcon's `alt` string. jsdom cannot run Leaflet's renderer, so this is code-reviewed, not test-covered; the redundant text list next to every map is the accessibility-guaranteed path, and *that* list is asserted in tests | Code-reviewed + partially automated |
 | Filter chips (`RefugeFilter`) keep native checkbox semantics | Checkbox `<input>` is visually hidden with `sr-only`, not removed - it still receives Tab focus and toggles on Space/click; the visible chip gets its focus ring via `has-[:focus-visible]` on the wrapping `<label>` rather than a ring on the hidden input | Code-reviewed |
+| Sample-data pages (Refuges, Forecast) marked as non-live | `SampleDataNotice` renders text + icon (`role="note"`) at the top of both pages, never colour alone; `FeatureTeaserCards` labels both links "(sample data)" before navigation | Automated (component render) |
 | Tested once with a screen reader | Not done - no browser/screen reader available in the build environment | **Outstanding** |
 | `prefers-reduced-motion` respected | Global CSS rule in `index.css` collapses all transition/animation durations; Leaflet's `fitBounds` calls always pass `animate: false`; polish-pass additions (`Button` hover, chip toggle, chevron rotate) use ordinary `transition-*` classes that the same global rule neutralises | Code-reviewed |
 | Greyscale screenshot still readable | Not done - no browser available to screenshot | **Outstanding** |

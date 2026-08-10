@@ -15,12 +15,29 @@ export default function RefugeFilter({ selected, onChange, counts = {} }) {
     onChange(next);
   }
 
+  const allSelected = selected.length === 0;
+
   return (
     <fieldset>
       <legend className="text-micro font-semibold uppercase tracking-wide text-ink/60">
         Filter by type
       </legend>
       <div className="mt-2 flex flex-wrap gap-2">
+        <label
+          className={`flex cursor-pointer items-center gap-1.5 rounded-full border px-3.5 py-2 text-caption font-medium transition-colors has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-accent has-[:focus-visible]:ring-offset-2 ${
+            allSelected
+              ? 'border-accent bg-accent text-white'
+              : 'border-ink/20 bg-white text-ink hover:border-accent'
+          }`}
+        >
+          <input
+            type="checkbox"
+            checked={allSelected}
+            onChange={() => onChange([])}
+            className="sr-only"
+          />
+          All types
+        </label>
         {CATEGORIES.map((category) => {
           const isChecked = selected.includes(category);
           const count = counts[category];

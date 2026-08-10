@@ -1,10 +1,11 @@
 import { resolveFixture } from './__fixtures__/index.js';
 
 export class ApiError extends Error {
-  constructor(code, message) {
+  constructor(message, status, data = null) {
     super(message);
     this.name = 'ApiError';
-    this.code = code;
+    this.status = status;
+    this.data = data;
   }
 }
 
@@ -16,32 +17,31 @@ function delay(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-export async function request(path, { params } = {}) {
-  const query = params
-    ? Object.fromEntries(Object.entries(params).filter(([, v]) => v != null && v !== ''))
-    : {};
-
+export async function request(path, { method = 'GET', body } = {}) {
   if (USE_FIXTURES) {
     await delay(FIXTURE_DELAY_MS);
-    const result = resolveFixture(path, query);
+    const result = resolveFixture(path, body);
     if (result.error) {
-      throw new ApiError(result.error.code, result.error.message);
+      throw new ApiError(result.error.message, result.error.status, result.error.data ?? null);
     }
     return result.data;
   }
 
   const url = new URL(path, BASE_URL || window.location.origin);
-  Object.entries(query).forEach(([key, value]) => url.searchParams.set(key, value));
+  const response = await fetch(url, {
+    method,
+    headers: body ? { 'Content-Type': 'application/json' } : undefined,
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  const payload = await response.json();
 
-  const response = await fetch(url);
-  const body = await response.json();
-
-  if (!response.ok) {
+  if (!response.ok || payload.success === false) {
     throw new ApiError(
-      body.error?.code ?? 'INTERNAL_ERROR',
-      body.error?.message ?? 'Something went wrong.',
+      payload.message ?? 'Something went wrong.',
+      response.status,
+      payload.data ?? null,
     );
   }
 
-  return body;
+  return payload.data;
 }

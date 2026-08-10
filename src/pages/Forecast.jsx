@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
-import { CloudOff, Clock } from 'lucide-react';
+import { CloudOff, Clock, Info } from 'lucide-react';
 import { useSession } from '../context/SessionContext.jsx';
 import PlaceCombobox from '../components/PlaceCombobox.jsx';
 import ForecastTimeline from '../components/ForecastTimeline.jsx';
-import EstimateDisclaimer from '../components/EstimateDisclaimer.jsx';
 import SensoryIndicator from '../components/SensoryIndicator.jsx';
+import SampleDataNotice from '../components/SampleDataNotice.jsx';
+import Callout from '../components/ui/Callout.jsx';
 import PageHeader from '../components/ui/PageHeader.jsx';
 import Card from '../components/ui/Card.jsx';
 import Button from '../components/ui/Button.jsx';
@@ -15,6 +16,7 @@ import { findPlaceByName } from '../data/cbdPlaces.js';
 
 export default function Forecast() {
   const { session } = useSession();
+  const selectedRoute = session.routes.find((r) => r.routeId === session.selectedRouteId) ?? null;
   const [location, setLocation] = useState(session.destination ? { ...session.destination } : null);
   const [locationInput, setLocationInput] = useState('');
   const [locationError, setLocationError] = useState(null);
@@ -53,6 +55,9 @@ export default function Forecast() {
           title="Forecast"
           description="Choose an area or sensor location to see the next-hour forecast."
         />
+        <div className="mb-4">
+          <SampleDataNotice />
+        </div>
         <Card>
           <form onSubmit={handleLocationSubmit} className="space-y-4" noValidate>
             <PlaceCombobox
@@ -76,10 +81,23 @@ export default function Forecast() {
       <PageHeader title="Forecast" eyebrow={forecast?.sensorName ?? location.name} />
 
       <div className="mb-5">
-        <EstimateDisclaimer />
+        <Callout tone="info" icon={Info} title="Sample data">
+          <p>
+            This page shows example locations for demonstration. It is not live information and no
+            backend service supplies it yet.
+          </p>
+          <p className="mt-1">Estimate based on historical patterns.</p>
+        </Callout>
       </div>
 
-      {isLoading && <p className="text-caption text-ink/60">Loading forecast…</p>}
+      {isLoading && (
+        <div aria-busy="true">
+          <p role="status" className="sr-only">
+            Loading forecast…
+          </p>
+          <Card className="h-40 animate-pulse bg-ink/5" aria-hidden="true" />
+        </div>
+      )}
 
       {!isLoading && forecast && !forecast.sufficientHistory && (
         <Card className="text-center">
@@ -112,7 +130,7 @@ export default function Forecast() {
           <Section title="Next 60 minutes">
             <ForecastTimeline
               timeline={forecast.timeline}
-              liveCount={session.lastSelectedRoute?.averageCountPerMinute ?? null}
+              liveCount={selectedRoute?.exposure.averagePedestrianCount ?? null}
             />
           </Section>
         </>

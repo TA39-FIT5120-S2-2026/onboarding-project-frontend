@@ -1,4 +1,5 @@
 import BandIcon from './BandIcon.jsx';
+import Card from './ui/Card.jsx';
 import { BAND_LABELS, BAND_ORDER } from '../utils/bandLabels.js';
 
 const TEXT_COLOR = {
@@ -14,10 +15,7 @@ export default function BandExplainer() {
   return (
     <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
       {BAND_ORDER.map((band) => (
-        <div
-          key={band}
-          className="flex items-start gap-2.5 rounded-lg border border-ink/10 bg-white p-3"
-        >
+        <Card key={band} padding="sm" className="flex items-start gap-2.5">
           <BandIcon
             shape={BAND_LABELS[band].icon}
             className={`mt-0.5 h-5 w-5 flex-shrink-0 ${TEXT_COLOR[band]}`}
@@ -26,7 +24,7 @@ export default function BandExplainer() {
             <p className="font-semibold text-ink">{BAND_LABELS[band].text}</p>
             <p className="text-micro text-ink/60">{BAND_LABELS[band].description}</p>
           </div>
-        </div>
+        </Card>
       ))}
     </div>
   );

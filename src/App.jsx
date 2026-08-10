@@ -12,7 +12,7 @@ export default function App() {
       <Routes>
         <Route path="/" element={<RoutePlanner />} />
         <Route path="/routes" element={<RouteResults />} />
-        <Route path="/routes/:id" element={<RouteDetail />} />
+        <Route path="/routes/:routeId" element={<RouteDetail />} />
         <Route path="/refuges" element={<SensoryRefuges />} />
         <Route path="/forecast" element={<Forecast />} />
       </Routes>

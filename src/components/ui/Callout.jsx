@@ -16,11 +16,11 @@ const TONES = {
 // errors). `role` is left to the caller - callers that must announce to
 // assistive tech pass role="alert" themselves; this component only
 // standardises the look.
-export default function Callout({ tone = 'info', icon: Icon, title, children, role, actions }) {
+export default function Callout({ tone = 'info', icon: Icon, title, children, role, actions, id }) {
   const t = TONES[tone] ?? TONES.info;
 
   return (
-    <div role={role} className={`rounded-lg border p-4 ${t.container}`}>
+    <div id={id} role={role} className={`rounded-lg border p-4 ${t.container}`}>
       <div className="flex items-start gap-3">
         {Icon && <Icon className={`mt-0.5 h-5 w-5 flex-shrink-0 ${t.icon}`} aria-hidden="true" />}
         <div className="min-w-0 flex-1">

@@ -12,7 +12,7 @@ No login. No accounts. Nothing stored beyond the browser session.
 |---|---|
 | Framework | React 18 + Vite |
 | Routing | React Router |
-| Map | Leaflet via react-leaflet |
+| Map | Leaflet via react-leaflet, CARTO Positron basemap (`src/components/map/BaseTileLayer.jsx`) - deliberately paler and lower-detail than standard OSM tiles, so route/refuge overlays read clearly against a calm base |
 | HTTP | fetch, wrapped in `src/api/` |
 | State | React context for session state, no Redux |
 | Styling | Tailwind CSS, meets WCAG AA |
@@ -32,8 +32,16 @@ npm run dev
 
 ```
 VITE_API_BASE_URL=http://localhost:3000
-VITE_USE_FIXTURES=true
+VITE_USE_FIXTURES=false
 ```
+
+Requires the backend (`onboarding-project-backend`) running at
+`VITE_API_BASE_URL`, with its database seeded - see that repo's `data-import/`
+scripts. Without a seeded `cbd_boundary` table every route request 500s. Set
+`VITE_USE_FIXTURES=true` to develop the route-planning flow against bundled
+fixtures instead. The Refuges and Forecast pages always use bundled sample
+data regardless of this flag - no backend implements either endpoint, see
+`docs/BACKEND_GAPS.md`.
 
 Other scripts:
 
@@ -63,21 +71,25 @@ src/
   components/
     ui/                          Design-system primitives, reused across all 5 pages
       Button.jsx                 Polymorphic: renders <Link> when given `to`, else <button>
-      Card.jsx
+      Card.jsx                   `padding="md"|"sm"` variants
       Stat.jsx                   Big number + small label (the "attractive number" pattern)
       PageHeader.jsx
       Section.jsx
       Callout.jsx                Shared shape for every warning/info box (role passed by caller)
     layout/
-      AppShell.jsx               Skip link, mobile top bar, <main>
-      NavBar.jsx                 Bottom tabs <md, left rail >=md, with icons + privacy note
+      AppShell.jsx               Skip link, mobile top bar, <main>, mobile PrivacyNote
+      NavBar.jsx                 Bottom tabs <md, left rail >=md, with icons + PrivacyNote
+      PrivacyNote.jsx            "Session only" promise - shared so it's never desktop-only
       StartOverButton.jsx        Resets session state, with a confirm prompt
+    map/
+      BaseTileLayer.jsx          CARTO Positron tiles, shared by RouteMap and RefugeMap
     SensoryIndicator.jsx         Low / Medium / High badge
     BandIcon.jsx                 Shape per band (circle/triangle/square/dash)
     BandExplainer.jsx            "How we rate crowd levels" - homepage band walkthrough
     FeatureTeaserCards.jsx       Homepage teaser cards linking to Refuges and Forecast
     IndicatorDetail.jsx          Expandable sensor detail
     RouteCard.jsx
+    RouteExposureStats.jsx       Average / peak / sensor-coverage row (ranking honesty)
     RouteComparisonList.jsx
     RecommendedBadge.jsx
     BandLegend.jsx
@@ -93,33 +105,44 @@ src/
     RefugeMarker.jsx
     RefugeIcon.jsx
     RefugeDetail.jsx
-    RefugeFilter.jsx             Chip-style type filter with a per-category count
+    RefugeFilter.jsx             Chip-style type filter, "All types" + a per-category count
     LocationPinIcon.jsx
     ForecastTimeline.jsx
-    EstimateDisclaimer.jsx
-    PlaceCombobox.jsx            Labelled type-ahead over cbdPlaces
-    AccessPointCard.jsx
+    PlaceCombobox.jsx            Hand-built ARIA combobox: prefix + fuzzy match, keyboard nav
+    SampleDataNotice.jsx         "Sample data" callout for Refuges/Forecast (no backend for either)
     FieldError.jsx
     __tests__/
   context/
-    SessionContext.jsx           tolerance + last selected route + in-flight route search
+    SessionContext.jsx           tolerance + selected route id + in-flight route plan
   api/
-    client.js                    fetch wrapper, fixture switch, ApiError
-    routes.js
-    refuges.js
-    forecast.js
-    __fixtures__/
+    client.js                    fetch wrapper, fixture switch, ApiError, unwraps {success,message,data}
+    errors.js                    HTTP status -> plain-language copy (backend has no error code field)
+    routes.js                    POST /api/routes/plan, POST /api/routes/validate
+    sensors.js                   GET /api/sensors/latest
+    refuges.js                   always serves bundled sample data - no backend endpoint exists
+    forecast.js                  always serves bundled sample data - no backend endpoint exists
+    __fixtures__/                route-plan fixture + fixture switch, used when VITE_USE_FIXTURES=true
   data/
-    cbdPlaces.js                 Static named-place list standing in for a geocoder
+    cbdPlaces.js                 Combines generated + colloquial + out-of-coverage places; search
+    cbdPlaces.generated.js       GENERATED - see docs/PLACE_DATA.md, never hand-edited
+    __tests__/
+  theme/
+    colors.js                    Single source of colour hexes - tailwind.config.js imports this
   hooks/
     useFocusTrap.js               Focus trap + Escape + focus-return for CheckInModal
   utils/
-    bandLabels.js                 Display strings, icons and colours per band
-    tolerance.js                  Check-in options, tolerance comparison
+    bandLabels.js                 Display strings and icons per band; colours re-exported from theme/
+    tolerance.js                  Check-in options
     format.js                     Distance/duration/count/time formatting
     refugeCategories.js           Labels, colours and shapes per refuge category
+    routeSections.js              Presentation-only merge of adjacent same-band crowd sections
+    __tests__/
   test/
     setup.jsx                     jest-dom matchers + global react-leaflet mock
+
+scripts/
+  generate-cbd-places.mjs        Dev-only. Regenerates cbdPlaces.generated.js - see docs/PLACE_DATA.md
+  placeOverrides.js               Curated additions/exclusions, shared with the runtime place list
 ```
 
 ---
@@ -131,19 +154,21 @@ src/
 ```js
 {
   tolerance: 'MEDIUM',            // default when check-in is skipped
-  lastSelectedRoute: null,        // route object; used by PredictiveAlert and Forecast's "Now" bar
-  routes: [],                     // most recent GET /api/routes result, kept for Route Detail's
-                                   // alternative-route lookup and the "compare again" flow
-  accessPoints: null,
-  toleranceApplied: 'MEDIUM',
-  noRouteMeetsTolerance: false,
+  selectedRouteId: null,          // routeId (number) from the most recent /plan response;
+                                   // used by PredictiveAlert and Forecast's "Now" bar
+  routes: [],                     // most recent POST /api/routes/plan result - each route already
+                                   // carries routeSections and exposure.sensors, so Route Detail
+                                   // reads from here instead of a GET /api/routes/:id call
+  decision: null,                 // backend's { reasonCode, message, ... } for the recommendation
+  alternativeComparison: null,
+  hasAcceptableRoute: true,
   origin: null,                   // { id, name, lat, lng } from data/cbdPlaces.js
   destination: null,              // same shape; also used by Refuges/Forecast to prefill a location
   checkInSeen: false,              // check-in shows once per session
 }
 ```
 
-`tolerance` and `lastSelectedRoute` are the two fields the acceptance criteria call out directly. `routes`, `accessPoints`, `toleranceApplied` and `noRouteMeetsTolerance` were added because Route Detail (AC 1.3.2, 1.3.3) needs the full route list and the tolerance the API evaluated against to survive navigation from Route Results - `GET /api/routes/:id` does not return them. `origin`/`destination` let Refuges and Forecast prefill a location without a second geocoding step. `checkInSeen` implements "appears once per session" from the Build decisions table.
+`tolerance` and `selectedRouteId` are the two fields the acceptance criteria call out directly. `routes`, `decision`, `alternativeComparison` and `hasAcceptableRoute` come straight off the backend's `/plan` response and are kept so Route Detail (AC 1.3.2, 1.3.3) survives navigation from Route Results without a second request - see `docs/BACKEND_GAPS.md` for why there is no `GET /api/routes/:id` to refetch from. `origin`/`destination` let Refuges and Forecast prefill a location without a second geocoding step. `checkInSeen` implements "appears once per session" from the Build decisions table.
 
 `resetSession()` sets the whole object back to these defaults. It's exposed via `useSession()` and wired to `StartOverButton.jsx` (mobile top bar, desktop rail) so a user can clear a planned trip without waiting for a refresh - the button confirms first, since it discards an in-progress plan.
 
@@ -155,7 +180,7 @@ Decisions made while building where the docs did not specify an approach. Confir
 
 | Gap | Decision |
 |---|---|
-| `API_CONTRACT.md` takes `origin`/`destination` as `lat,lng`, but there is no geocoding endpoint | `src/data/cbdPlaces.js` - a static list of ~20 named Melbourne CBD landmarks with coordinates. Origin/destination/refuge-location/forecast-location fields are all a labelled `PlaceCombobox` (native `<input list>` + `<datalist>`) over this list. A handful of real Melbourne landmarks outside the CBD bounding box are included deliberately so AC 1.1.1 Scenario 3 is reachable from the combobox. |
+| The backend takes `origin`/`destination` as coordinates, but there is no geocoding endpoint - and a third-party geocoder would send what the user types off-device | `src/data/cbdPlaces.js` - real City of Melbourne landmarks, verified against the backend's actual CBD polygon and generated by `scripts/generate-cbd-places.mjs` (see `docs/PLACE_DATA.md`). Origin/destination/refuge-location/forecast-location fields are all a labelled `PlaceCombobox` - a hand-built ARIA combobox with prefix and fuzzy matching, not native `<datalist>` (which can't fuzzy-match or expose `aria-activedescendant`). A handful of real Melbourne landmarks outside the backend's CBD polygon are included deliberately so AC 1.1.1 Scenario 3 is reachable from the combobox. |
 | Forecast's "area or sensor location" selector has no backing endpoint | Same `cbdPlaces.js`; calls `GET /api/forecast?lat=&lng=`, not `sensorId`. |
 | AC 2.2.1 requires predicted values "visually distinguished from live readings", but `GET /api/forecast` returns predictions only | Live = `averageCountPerMinute` of `session.lastSelectedRoute`, drawn as a solid "Now" bar with its value shown as text. Predicted bars are outlined/dashed and tagged "est.". No active route this session -> no "Now" bar, predicted-only timeline. |
 | No test framework specified, but AC 1.1.2 task 4 requires boundary tests | Vitest + React Testing Library + jsdom. `react-leaflet` is mocked globally in `src/test/setup.jsx` - jsdom cannot run Leaflet's real SVG renderer. |
@@ -164,18 +189,24 @@ Decisions made while building where the docs did not specify an approach. Confir
 
 ## Fixture scenarios (`VITE_USE_FIXTURES=true`)
 
-`src/api/__fixtures__/index.js` is a mock backend: it encodes the derived-field rules from `API_CONTRACT.md` (`withinTolerance`, `noRouteMeetsTolerance`) the way the real backend would. Production code in `src/api/*.js` never computes a band or a tolerance comparison itself. A test (`fixtures.contract.test.js`) checks every fixture's field names against the contract, so a silent rename fails CI.
+`src/api/__fixtures__/index.js` is a mock backend for `POST /api/routes/plan` -
+it encodes the derived fields (`withinTolerance`, `recommended`, `decision`,
+`hasAcceptableRoute`) the way the real backend would. Production code in
+`src/api/*.js` never computes a band or a tolerance comparison itself. A test
+(`fixtures.contract.test.js`) checks the fixture's field names against
+`docs/API_CONTRACT.md`, so a silent rename fails CI.
 
 | Trigger | Fixture response |
 |---|---|
-| Origin or destination outside the CBD bounding box | 400 `OUT_OF_BOUNDS` |
-| Destination = Flinders Street Station | `routesPeak.json` - all routes MEDIUM/HIGH |
-| Flinders Street Station + `tolerance=LOW` | `noRouteMeetsTolerance: true`, every route `withinTolerance: false` |
-| Any other CBD destination | `routes.json` - r1 38 LOW (recommended), r2 54 MEDIUM, r3 162 HIGH |
-| `GET /api/routes/r3` | Segments include one HIGH (Swanston St) and one `NO_DATA` (Little Lonsdale St) |
-| `GET /api/refuges?types=quiet_space` | `refuges: []` - the fixture data has no quiet-space refuge near the default location |
-| Forecast for Docklands Library | `sufficientHistory: false`, `timeline: []`, `peakBand: null` |
-| Forecast anywhere else | `peakBand: "HIGH"`, `peakWindow: "14:30-14:45"` |
+| Origin or destination outside the CBD bounding box | 400, `data.canPlanRoute: false` |
+| Destination = Flinders Street Station | all routes MEDIUM/HIGH |
+| Flinders Street Station + `crowdTolerance: LOW` | `hasAcceptableRoute: false`, every route `withinTolerance: false` |
+| Any other CBD destination | r1 LOW (recommended), r2 MEDIUM, r3 HIGH |
+
+`refuges.js` and `forecast.js` do not use this fixture switch - they always
+serve bundled sample JSON (`__fixtures__/refuges.json`, `forecast.json`,
+`forecastInsufficient.json`), unconditionally, because no backend
+implements either endpoint. See `docs/BACKEND_GAPS.md`.
 
 ---
 
@@ -228,7 +259,7 @@ Stays on `/` - the acceptance criteria pin Route Planner to this path - but is n
 
 Each route card shows: walking time, distance, pedestrian count per minute, sensory band, and a Recommended badge on the lowest-exposure route which sorts first.
 
-Nearest tram stop or train station displayed at both origin and destination.
+Nearest tram stop or train station at origin/destination (AC 1.1.1 Scenario 2) is **not implemented** - the backend ingests no public-transport dataset. See `docs/BACKEND_GAPS.md`.
 
 Tapping the sensory indicator expands to show sensor name, count, reading time, and the City of Melbourne CC BY 4.0 attribution. A segment with `band: "NO_DATA"` renders as "No sensor data" - never as Low.
 
@@ -256,7 +287,7 @@ Appears once, when a route is selected on Route Results.
 
 ---
 
-### 4. Route Detail - `/routes/:id`
+### 4. Route Detail - `/routes/:routeId`
 
 **Covers AC 1.2.3, AC 1.3.2, AC 1.3.3**
 
@@ -272,6 +303,9 @@ Appears once, when a route is selected on Route Results.
 
 **Covers AC 2.1.1, AC 2.1.2, AC 2.1.3**
 
+**Sample data.** No backend endpoint exists (`docs/BACKEND_GAPS.md`); the page
+always shows bundled sample locations behind a visible "Sample data" notice.
+
 - Map with refuge markers within 500m, visually distinct from route markers, with a legend
 - Type filter: park, library, quiet space
 - Selecting a marker shows name, category, address, walking distance
@@ -285,6 +319,9 @@ If no route is active, prompt for a location before searching.
 ### 6. Forecast - `/forecast`
 
 **Covers AC 2.2.1, AC 2.2.2**
+
+**Sample data.** No backend endpoint exists (`docs/BACKEND_GAPS.md`); the page
+always shows a bundled sample forecast behind a visible "Sample data" notice.
 
 - Area or sensor selector
 - Timeline of predicted counts for the next 60 minutes
@@ -353,12 +390,15 @@ Steps 1 to 4 need only `GET /api/routes`, so start as soon as the backend has th
 
 ---
 
-## Working against an unfinished backend
+## Working against the backend
 
-Do not block. Put a fixture in `src/api/__fixtures__/` matching the response shape in the backend README, and switch on an env flag:
-
-```
-VITE_USE_FIXTURES=true
-```
-
-Delete the flag before the Week 3 deployment. Fixtures are for development only - the deployed build must use real data. The test suite always runs with `VITE_USE_FIXTURES=true` (set in `vite.config.js`'s `test.env`), regardless of the local `.env` file, so tests are deterministic.
+The backend at `onboarding-project-backend` implements `POST /api/routes/plan`
+(see `docs/API_CONTRACT.md`) but not `/api/refuges` or `/api/forecast` (see
+`docs/BACKEND_GAPS.md`). For route planning, either run the real backend
+(`VITE_USE_FIXTURES=false`, database seeded per that repo's `data-import/`
+scripts) or develop against the bundled fixture (`VITE_USE_FIXTURES=true`).
+Delete the flag before a real deployment - fixtures are for development only.
+The test suite always runs with `VITE_USE_FIXTURES=true` (set in
+`vite.config.js`'s `test.env`), regardless of the local `.env` file, so tests
+are deterministic. Refuges and Forecast ignore this flag entirely - they
+always serve bundled sample data.

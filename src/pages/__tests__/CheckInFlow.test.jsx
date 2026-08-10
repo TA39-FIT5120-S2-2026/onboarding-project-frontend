@@ -19,7 +19,7 @@ function renderApp() {
         <Routes>
           <Route path="/" element={<RoutePlanner />} />
           <Route path="/routes" element={<RouteResults />} />
-          <Route path="/routes/:id" element={<RouteDetail />} />
+          <Route path="/routes/:routeId" element={<RouteDetail />} />
         </Routes>
       </MemoryRouter>
     </SessionProvider>,

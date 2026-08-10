@@ -1,30 +1,69 @@
 import { describe, it, expect } from 'vitest';
-import routes from './routes.json';
-import routesPeak from './routesPeak.json';
-import routeDetails from './routeDetails.json';
+import { resolveFixture } from './index.js';
 import refuges from './refuges.json';
 import forecast from './forecast.json';
 import forecastInsufficient from './forecastInsufficient.json';
 
-const ROUTE_FIELDS = [
-  'id',
-  'walkingTimeMinutes',
-  'distanceMetres',
-  'averageCountPerMinute',
-  'band',
-  'recommended',
-  'reason',
-  'geometry',
+const MELBOURNE_CENTRAL = { latitude: -37.8103, longitude: 144.9628 };
+const BOURKE_STREET_MALL = { latitude: -37.8136, longitude: 144.9648 };
+const FLINDERS_STREET_STATION = { latitude: -37.8183, longitude: 144.9671 };
+const ST_KILDA_BEACH = { latitude: -37.8677, longitude: 144.9797 };
+
+const PLAN_DATA_FIELDS = [
+  'origin',
+  'destination',
+  'routeCount',
+  'recommendedRouteId',
+  'crowdTolerance',
+  'acceptableRouteCount',
+  'hasAcceptableRoute',
+  'fallbackRouteId',
+  'decision',
+  'alternativeComparison',
+  'routes',
 ];
 
-const SEGMENT_FIELDS = [
+const ROUTE_FIELDS = [
+  'routeId',
+  'rank',
+  'distance',
+  'duration',
+  'exposure',
+  'routeSections',
+  'congestedSections',
   'geometry',
-  'streetName',
-  'sensorId',
-  'sensorName',
-  'countPerMinute',
-  'band',
-  'readingTakenAt',
+  'segments',
+  'withinTolerance',
+  'recommended',
+  'fallback',
+];
+
+const EXPOSURE_FIELDS = [
+  'sensoryBand',
+  'dataCoverage',
+  'routeRadiusMeters',
+  'matchedSensorCount',
+  'averagePedestrianCount',
+  'maximumPedestrianCount',
+  'latestReadingAt',
+  'dataSource',
+  'freshnessStatus',
+  'staleAfterMinutes',
+  'sensors',
+];
+
+const SECTION_FIELDS = [
+  'sectionId',
+  'sensoryBand',
+  'geometry',
+  'startCoordinate',
+  'endCoordinate',
+  'distanceMeters',
+  'averagePedestrianCount',
+  'maximumPedestrianCount',
+  'sensorIds',
+  'sensors',
+  'freshnessStatus',
 ];
 
 const REFUGE_FIELDS = ['id', 'name', 'category', 'address', 'walkingDistanceMetres', 'lat', 'lng'];
@@ -50,37 +89,58 @@ function expectFields(obj, fields) {
   Object.keys(obj).forEach((key) => expect(fields).toContain(key));
 }
 
-describe('fixtures match API_CONTRACT.md field names', () => {
-  it.each([
-    ['routes.json', routes],
-    ['routesPeak.json', routesPeak],
-  ])('%s routes have contract fields', (_name, fixture) => {
-    expect(fixture.routes.length).toBeGreaterThan(0);
-    fixture.routes.forEach((route) => expectFields(route, ROUTE_FIELDS));
-    expect(fixture.routes.filter((r) => r.recommended).length).toBe(1);
-    expect(fixture.accessPoints).toHaveProperty('origin');
-    expect(fixture.accessPoints).toHaveProperty('destination');
+function planRoute(origin, destination, crowdTolerance) {
+  const result = resolveFixture('/api/routes/plan', { origin, destination, crowdTolerance });
+  expect(result.error).toBeUndefined();
+  return result.data;
+}
+
+describe('route-plan fixture matches API_CONTRACT.md field names', () => {
+  it('a normal plan has contract fields at every level', () => {
+    const data = planRoute(MELBOURNE_CENTRAL, BOURKE_STREET_MALL, 'MEDIUM');
+    expectFields(data, PLAN_DATA_FIELDS);
+    expect(data.routes.length).toBeGreaterThan(0);
+
+    data.routes.forEach((route) => {
+      expectFields(route, ROUTE_FIELDS);
+      expectFields(route.exposure, EXPOSURE_FIELDS);
+      expect(VALID_BANDS).toContain(route.exposure.sensoryBand);
+      route.routeSections.forEach((section) => expectFields(section, SECTION_FIELDS));
+    });
+
+    expect(data.routes.filter((r) => r.recommended).length).toBe(1);
+    expect(data.hasAcceptableRoute).toBe(true);
   });
 
-  it('routeDetails segments have contract fields', () => {
-    Object.values(routeDetails).forEach((detail) => {
-      expect(detail).toHaveProperty('id');
-      expect(detail).toHaveProperty('attribution');
-      expect(detail).toHaveProperty('dataLastUpdated');
-      detail.segments.forEach((segment) => {
-        expectFields(segment, SEGMENT_FIELDS);
-        expect(VALID_BANDS).toContain(segment.band);
-        expect(segment.streetName).toBeTruthy();
-        if (segment.band === 'NO_DATA') {
-          expect(segment.sensorId).toBeNull();
-          expect(segment.sensorName).toBeNull();
-          expect(segment.countPerMinute).toBeNull();
-          expect(segment.readingTakenAt).toBeNull();
-        }
-      });
+  it('an out-of-CBD destination returns canPlanRoute: false, never a route list', () => {
+    const result = resolveFixture('/api/routes/plan', {
+      origin: MELBOURNE_CENTRAL,
+      destination: ST_KILDA_BEACH,
+      crowdTolerance: 'MEDIUM',
+    });
+    expect(result.error).toBeDefined();
+    expect(result.error.status).toBe(400);
+    expect(result.error.data.canPlanRoute).toBe(false);
+  });
+
+  it('a strict tolerance at a peak destination yields hasAcceptableRoute: false with every route not within tolerance', () => {
+    const data = planRoute(MELBOURNE_CENTRAL, FLINDERS_STREET_STATION, 'LOW');
+    expect(data.hasAcceptableRoute).toBe(false);
+    expect(data.fallbackRouteId).not.toBeNull();
+    data.routes.forEach((route) => expect(route.withinTolerance).toBe(false));
+  });
+
+  it('NO_DATA is never returned as LOW', () => {
+    const data = planRoute(MELBOURNE_CENTRAL, BOURKE_STREET_MALL, 'MEDIUM');
+    data.routes.forEach((route) => {
+      if (route.exposure.sensoryBand === 'NO_DATA') {
+        expect(route.exposure.averagePedestrianCount).toBeNull();
+      }
     });
   });
+});
 
+describe('sample-data fixtures match API_CONTRACT.md field names', () => {
   it('refuges.json has contract fields', () => {
     refuges.refuges.forEach((refuge) => expectFields(refuge, REFUGE_FIELDS));
     expect(refuges).toHaveProperty('searchRadiusMetres');

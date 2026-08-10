@@ -1,21 +1,18 @@
+import { BAND_COLORS as THEME_BAND_COLORS } from '../theme/colors.js';
+
 export const BAND_LABELS = {
   LOW: { text: 'Low', description: 'Under 50 people per minute', icon: 'circle' },
   MEDIUM: { text: 'Medium', description: '50 to 149 people per minute', icon: 'triangle' },
   HIGH: { text: 'High', description: '150 or more people per minute', icon: 'square' },
-  NO_DATA: { text: 'No sensor data', description: 'No sensor within 200 metres', icon: 'dash' },
+  NO_DATA: { text: 'No sensor data', description: 'No sensor within 50 metres', icon: 'dash' },
 };
 
 export const BAND_ORDER = ['LOW', 'MEDIUM', 'HIGH'];
 
-// Mirrors the band.* colours in tailwind.config.js. Kept as plain hex here
-// because map/SVG drawing (Leaflet path options, inline SVG) takes real
-// colour values, not Tailwind class names.
-export const BAND_COLORS = {
-  LOW: '#2F6E3B',
-  MEDIUM: '#7A5C0E',
-  HIGH: '#A32E2E',
-  NO_DATA: '#5A5F58',
-};
+// Re-exported from src/theme/colors.js (single source of truth, also used
+// by tailwind.config.js) because map/SVG drawing (Leaflet path options,
+// inline SVG) takes real colour values, not Tailwind class names.
+export const BAND_COLORS = THEME_BAND_COLORS;
 
 export function bandRank(band) {
   const index = BAND_ORDER.indexOf(band);

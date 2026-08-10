@@ -5,243 +5,265 @@
 Base URL comes from `VITE_API_BASE_URL` (frontend) or `PORT` (backend).
 No authentication. No cookies. No session headers.
 
+This file documents the backend **as built**, verified by reading
+`onboarding-project-backend/src` and probing the running server. It replaces
+an earlier version of this contract that the backend did not implement (see
+`docs/BACKEND_GAPS.md` for what changed and why, and for known deviations
+still open).
+
 ---
 
 ## Conventions
 
-- All responses are JSON.
-- All field names are **camelCase**.
-- Distances are in **metres**, times in **minutes**, counts are **per minute**.
-- Timestamps are ISO 8601 with Melbourne offset, e.g. `2026-08-06T14:20:00+10:00`.
-- Coordinates are `lat` and `lng` as separate numbers, except route geometry which is GeoJSON.
-- A missing value is `null`, never an empty string.
+- All responses are JSON, wrapped in an envelope: `{ success, message, data }` on 2xx, `{ success: false, message }` on error.
+- Field names inside `data` are **camelCase**.
+- Distances are in **metres**, durations given in both **seconds** and **minutes**, pedestrian counts are **per minute**.
+- Coordinates are `latitude`/`longitude` in request bodies, `lat`/`lng` in the frontend's own place data.
+- Route and section geometry is GeoJSON (`{ type: "LineString", coordinates: [[lng, lat], ...] }`).
 
 ## Band values
 
-Only these five strings ever appear in a `band` field:
+Only these four strings ever appear in a `sensoryBand` field:
 
 ```
 "LOW"      under 50 counts per minute
 "MEDIUM"   50 to 149
 "HIGH"     150 and above
-"NO_DATA"  no sensor within 200m of that segment
+"NO_DATA"  no sensor within 50m of that section
 ```
 
-`NO_DATA` is never substituted with `LOW`.
+`NO_DATA` is never substituted with `LOW`. The 50m radius is set by
+`SENSOR_ROUTE_RADIUS_METERS` in the backend's `.env` (see `docs/BACKEND_GAPS.md`).
 
 ## Error shape
 
 ```json
 {
-  "error": {
-    "code": "OUT_OF_BOUNDS",
-    "message": "That location is outside the Melbourne CBD area we cover."
-  }
+  "success": false,
+  "message": "Origin and destination must be within Melbourne CBD."
 }
 ```
 
-`message` is shown directly to the user, so it must be plain language.
+There is no machine-readable error code. The frontend maps HTTP status to
+copy (`src/api/errors.js`); `message` is plain language and safe to show
+directly to the user.
 
-| Code | Status | When |
-|---|---|---|
-| `OUT_OF_BOUNDS` | 400 | Origin or destination outside the CBD |
-| `MISSING_PARAMETER` | 400 | Required query parameter absent |
-| `NO_ROUTE_FOUND` | 404 | Routing engine returned nothing |
-| `UPSTREAM_UNAVAILABLE` | 503 | OpenRouteService failed |
-| `INTERNAL_ERROR` | 500 | Anything else |
+| Status | When |
+|---|---|
+| 400 | Missing/invalid coordinates, or origin/destination outside the CBD (`data.canPlanRoute: false` is also present - see below) |
+| 404 | Routing engine returned zero routes |
+| 500 | No OpenRouteService API key configured, or an unhandled error |
+| 502 | OpenRouteService request failed |
 
 ---
 
 # Endpoints
 
-## GET /api/routes
+## GET /api/health
 
-Covers AC 1.1.1, 1.1.2, 1.2.1, 1.2.2, 1.3.2, 1.3.3
+```json
+{ "success": true, "message": "Backend is running." }
+```
 
-### Query parameters
+## GET /api/sensors/latest
 
-| Name | Required | Format | Notes |
-|---|---|---|---|
-| `origin` | yes | `lat,lng` | e.g. `-37.8136,144.9631` |
-| `destination` | yes | `lat,lng` | |
-| `tolerance` | no | `LOW` \| `MEDIUM` \| `HIGH` | Defaults to `MEDIUM` |
-
-### 200 response
+Most recent reading per active sensor.
 
 ```json
 {
-  "routes": [
+  "success": true,
+  "meta": {
+    "source": "City of Melbourne Open Data",
+    "fetchedFrom": "onboarding_project database",
+    "latestReadingAt": "2026-08-06T14:20:00",
+    "sensorCount": 134
+  },
+  "data": [
     {
-      "id": "r1",
-      "walkingTimeMinutes": 14,
-      "distanceMetres": 900,
-      "averageCountPerMinute": 42,
-      "band": "LOW",
-      "recommended": true,
-      "withinTolerance": true,
-      "reason": "Lowest pedestrian exposure of the available routes",
-      "geometry": {
-        "type": "LineString",
-        "coordinates": [[144.9631, -37.8136], [144.9652, -37.8098]]
+      "locationId": 34,
+      "name": "Swanston St North",
+      "sensorName": "Swanston St North",
+      "coordinates": { "latitude": -37.8136, "longitude": 144.9631 },
+      "reading": {
+        "direction1": 90,
+        "direction2": 97,
+        "total": 187,
+        "sensoryBand": "HIGH",
+        "timestamp": "2026-08-06T14:20:00"
       }
     }
-  ],
-  "accessPoints": {
-    "origin": {
-      "name": "Melbourne Central",
-      "mode": "train",
-      "distanceMetres": 120
-    },
-    "destination": {
-      "name": "Bourke St Mall",
-      "mode": "tram",
-      "distanceMetres": 60
-    }
-  },
-  "toleranceApplied": "MEDIUM",
-  "noRouteMeetsTolerance": false
+  ]
 }
 ```
 
-### Rules
+## POST /api/routes/validate
 
-- `routes` always has at least one entry on a 200.
-- Exactly one route has `recommended: true`, and it is the lowest `averageCountPerMinute`.
-- Routes are sorted with the recommended one first.
-- `withinTolerance` is false when the route's band exceeds `toleranceApplied`.
-- When no route is within tolerance, `noRouteMeetsTolerance` is `true` and every route has `withinTolerance: false`. The lowest-exposure route is still returned.
-- `accessPoints.origin` or `.destination` is `null` when no stop is within 300m.
-- `reason` is plain language, shown to the user.
+CBD-boundary pre-check without generating routes.
 
----
+### Request body
 
-## GET /api/routes/:id
-
-Covers AC 1.1.3, 1.2.3
+```json
+{
+  "origin": { "latitude": -37.8103, "longitude": 144.9628 },
+  "destination": { "latitude": -37.8183, "longitude": 144.9671 }
+}
+```
 
 ### 200 response
 
 ```json
 {
-  "id": "r1",
-  "segments": [
-    {
-      "geometry": { "type": "LineString", "coordinates": [] },
-      "streetName": "Swanston St",
-      "sensorId": 34,
-      "sensorName": "Swanston St North",
-      "countPerMinute": 187,
-      "band": "HIGH",
-      "readingTakenAt": "2026-08-06T14:20:00+10:00"
-    },
-    {
-      "geometry": { "type": "LineString", "coordinates": [] },
-      "streetName": "Little Lonsdale St",
-      "sensorId": null,
-      "sensorName": null,
-      "countPerMinute": null,
-      "band": "NO_DATA",
-      "readingTakenAt": null
-    }
-  ],
-  "attribution": "City of Melbourne, CC BY 4.0",
-  "dataLastUpdated": "2026-08-06T14:20:00+10:00"
+  "success": true,
+  "message": "Origin and destination are within Melbourne CBD.",
+  "data": { "originInsideCbd": true, "destinationInsideCbd": true, "canPlanRoute": true }
 }
 ```
 
-### Rules
-
-- `streetName` drives the crowd warning text, so it must be present even when the band is `NO_DATA`.
-- `dataLastUpdated` is the most recent `readingTakenAt` across all segments.
-
----
-
-## GET /api/refuges
-
-Covers AC 2.1.1, 2.1.2, 2.1.3
-
-### Query parameters
-
-| Name | Required | Format |
-|---|---|---|
-| `lat` | yes | number |
-| `lng` | yes | number |
-| `types` | no | comma separated: `park`, `library`, `quiet_space` |
-
-Omitting `types` returns all types.
-
-### 200 response
+### 400 response (outside CBD)
 
 ```json
 {
-  "refuges": [
-    {
-      "id": 12,
-      "name": "State Library Victoria",
-      "category": "library",
-      "address": "328 Swanston St, Melbourne",
-      "walkingDistanceMetres": 240,
-      "lat": -37.8098,
-      "lng": 144.9652
-    },
-    {
-      "id": 47,
-      "name": "Flagstaff Gardens",
-      "category": "park",
-      "address": null,
-      "walkingDistanceMetres": 480,
-      "lat": -37.8110,
-      "lng": 144.9540
-    }
-  ],
-  "searchRadiusMetres": 500
+  "success": false,
+  "message": "Origin and destination must be within Melbourne CBD.",
+  "data": { "originInsideCbd": true, "destinationInsideCbd": false, "canPlanRoute": false }
 }
 ```
 
-### Rules
+## POST /api/routes/plan
 
-- `category` is always one of `park`, `library`, `quiet_space`.
-- `address` may be `null` when the dataset has no address. The frontend renders "Unavailable".
-- An empty result is a 200 with `"refuges": []`, not a 404.
-- Sorted by `walkingDistanceMetres` ascending.
+Covers AC 1.1.1, 1.1.2, 1.2.1, 1.2.2, 1.2.3, 1.3.1, 1.3.2, 1.3.3.
 
----
+### Request body
 
-## GET /api/forecast
+| Field | Required | Format | Notes |
+|---|---|---|---|
+| `origin` | yes | `{latitude, longitude}` | |
+| `destination` | yes | `{latitude, longitude}` | |
+| `crowdTolerance` | no | `LOW` \| `MEDIUM` \| `HIGH` | Defaults to `DEFAULT_TOLERANCE` (backend `.env`, currently `MEDIUM`) |
 
-Covers AC 2.2.1, 2.2.2, 2.2.3
-
-### Query parameters
-
-Either `sensorId`, or `lat` and `lng` together.
-
-### 200 response
+### 200 response (shape, trimmed)
 
 ```json
 {
-  "sensorId": 34,
-  "sensorName": "Swanston St North",
-  "generatedAt": "2026-08-06T14:00:00+10:00",
-  "windowMinutes": 60,
-  "basis": "historical",
-  "sufficientHistory": true,
-  "timeline": [
-    { "minutesAhead": 15, "predictedCount": 92,  "band": "MEDIUM" },
-    { "minutesAhead": 30, "predictedCount": 164, "band": "HIGH" },
-    { "minutesAhead": 45, "predictedCount": 171, "band": "HIGH" },
-    { "minutesAhead": 60, "predictedCount": 130, "band": "MEDIUM" }
-  ],
-  "peakBand": "HIGH",
-  "peakWindow": "14:30-14:45"
+  "success": true,
+  "message": "Walking route alternatives generated successfully.",
+  "data": {
+    "origin": { "latitude": -37.8103, "longitude": 144.9628 },
+    "destination": { "latitude": -37.8183, "longitude": 144.9671 },
+    "routeCount": 2,
+    "recommendedRouteId": 1,
+    "crowdTolerance": "MEDIUM",
+    "acceptableRouteCount": 1,
+    "hasAcceptableRoute": true,
+    "fallbackRouteId": null,
+    "decision": {
+      "crowdTolerance": "MEDIUM",
+      "toleranceSource": "USER",
+      "suitableRouteFound": true,
+      "originalTopRankedRouteId": 1,
+      "recommendedRouteId": 1,
+      "fallbackRouteId": null,
+      "alternativeUsed": false,
+      "warningRequired": false,
+      "reasonCode": "ROUTE_WITHIN_TOLERANCE",
+      "message": "The lowest-exposure route is within your selected tolerance."
+    },
+    "alternativeComparison": null,
+    "routes": [
+      {
+        "routeId": 1,
+        "rank": 1,
+        "distance": { "meters": 900, "kilometres": 0.9 },
+        "duration": { "seconds": 840, "minutes": 14 },
+        "exposure": {
+          "sensoryBand": "LOW",
+          "dataCoverage": "PARTIAL",
+          "routeRadiusMeters": 50,
+          "matchedSensorCount": 3,
+          "averagePedestrianCount": 42,
+          "maximumPedestrianCount": 68,
+          "latestReadingAt": "2026-08-06T14:20:00",
+          "dataSource": "City of Melbourne Open Data",
+          "freshnessStatus": "FRESH",
+          "staleAfterMinutes": 30,
+          "sensors": [
+            {
+              "locationId": 34,
+              "name": "Swanston St North",
+              "sensorName": "Swanston St North",
+              "coordinates": { "latitude": -37.8136, "longitude": 144.9631 },
+              "distanceFromRouteMeters": 12,
+              "pedestrianCount": 42,
+              "sensoryBand": "LOW",
+              "timestamp": "2026-08-06T14:20:00",
+              "readingAgeMinutes": 4,
+              "freshnessStatus": "FRESH"
+            }
+          ]
+        },
+        "routeSections": [
+          {
+            "sectionId": 1,
+            "sensoryBand": "LOW",
+            "geometry": { "type": "LineString", "coordinates": [] },
+            "startCoordinate": [144.9628, -37.8103],
+            "endCoordinate": [144.965, -37.812],
+            "distanceMeters": 300,
+            "averagePedestrianCount": 42,
+            "maximumPedestrianCount": 68,
+            "sensorIds": [34],
+            "sensors": [],
+            "freshnessStatus": "FRESH"
+          }
+        ],
+        "congestedSections": [],
+        "geometry": { "type": "LineString", "coordinates": [[144.9628, -37.8103]] },
+        "segments": [
+          {
+            "distance": 900,
+            "duration": 840,
+            "steps": [
+              { "distance": 120, "duration": 96, "type": 11, "instruction": "Head north on Swanston St", "name": "Swanston St", "way_points": [0, 5] }
+            ]
+          }
+        ],
+        "withinTolerance": true,
+        "recommended": true,
+        "fallback": false
+      }
+    ]
+  }
 }
 ```
 
 ### Rules
 
-- `basis` is always `"historical"`. The frontend uses it to render the estimate disclaimer, so it is never omitted.
-- `sufficientHistory: false` returns `"timeline": []`, `"peakBand": null`, `"peakWindow": null`.
-- `peakBand` is the highest band in the timeline.
-- `peakWindow` is a human-readable local time range, used verbatim in the predictive alert.
+- `routeId` is a **1-based index, unique only within this response** - not a durable identifier. Do not persist it across requests.
+- `routes` always has at least one entry on a 200. OpenRouteService is asked for up to 3 alternatives but may return fewer.
+- Exactly one route has `recommended: true`.
+- `withinTolerance` is `false` when the route's `exposure.sensoryBand` exceeds `crowdTolerance`.
+- When `hasAcceptableRoute` is `false`, every route has `withinTolerance: false`; the lowest-exposure route is still returned as `fallbackRouteId`.
+- `decision.message` is plain language and drives the recommendation reason shown to the user.
+- `alternativeComparison` is present only when `decision.alternativeUsed` is `true`.
+- `routeSections` come from slicing the route geometry at sensor-influence boundaries; `startCoordinate`/`endCoordinate` are interpolated points, **not** vertices of `geometry.coordinates` or of any `segments[].steps[].way_points` index. There is no reliable way to join a section to a street name - treat "crowd sections" and "turn-by-turn directions" (`segments[].steps`) as two independent views of the same route.
+- `congestedSections` is the subset of `routeSections` with `sensoryBand` of `MEDIUM` or `HIGH`.
+
+---
+
+# Not implemented
+
+These were part of an earlier proposed contract. The backend does not
+implement them; the frontend serves bundled sample data instead, labelled
+with a visible "Sample data" notice.
+
+| Endpoint | Frontend fallback |
+|---|---|
+| `GET /api/routes/:id` | Not needed - `POST /api/routes/plan` already returns `routeSections` and `exposure.sensors` per route, held in session |
+| `GET /api/refuges` | `src/api/refuges.js` serves `src/api/__fixtures__/refuges.json` unconditionally |
+| `GET /api/forecast` | `src/api/forecast.js` serves `src/api/__fixtures__/forecast.json` / `forecastInsufficient.json` unconditionally |
+
+See `docs/BACKEND_GAPS.md` for the full list of deviations and what it would
+take to close each gap.
 
 ---
 
@@ -249,7 +271,7 @@ Either `sensorId`, or `lat` and `lng` together.
 
 1. Propose the change in the pull request description.
 2. Update this file in **both** repos in the same PR.
-3. Update the fixture in `frontend/src/api/__fixtures__/` to match.
+3. Update `docs/BACKEND_GAPS.md` if the change closes or adds a gap.
 4. Both a frontend and a backend person approve.
 
 Silent field renames are the single most likely way to break this project.

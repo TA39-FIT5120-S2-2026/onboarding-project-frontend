@@ -1,19 +1,26 @@
 import { request } from './client.js';
 
-function coord({ lat, lng }) {
-  return `${lat},${lng}`;
+function toCoordinate({ lat, lng }) {
+  return { latitude: lat, longitude: lng };
 }
 
-export function getRoutes({ origin, destination, tolerance }) {
-  return request('/api/routes', {
-    params: {
-      origin: coord(origin),
-      destination: coord(destination),
-      tolerance,
+export function planRoute({ origin, destination, crowdTolerance }) {
+  return request('/api/routes/plan', {
+    method: 'POST',
+    body: {
+      origin: toCoordinate(origin),
+      destination: toCoordinate(destination),
+      crowdTolerance,
     },
   });
 }
 
-export function getRouteDetail(id) {
-  return request(`/api/routes/${id}`);
+export function validateRoute({ origin, destination }) {
+  return request('/api/routes/validate', {
+    method: 'POST',
+    body: {
+      origin: toCoordinate(origin),
+      destination: toCoordinate(destination),
+    },
+  });
 }

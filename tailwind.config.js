@@ -1,24 +1,26 @@
+import { INK, PAPER, ACCENT, ACCENT_DARK, BAND_COLORS, BAND_BG_COLORS } from './src/theme/colors.js';
+
 /** @type {import('tailwindcss').Config} */
 export default {
   content: ['./index.html', './src/**/*.{js,jsx}'],
   theme: {
     extend: {
       colors: {
-        ink: '#1F2A22',
-        paper: '#FAF8F3',
+        ink: INK,
+        paper: PAPER,
         accent: {
-          DEFAULT: '#3F5A3D',
-          dark: '#2C4029',
+          DEFAULT: ACCENT,
+          dark: ACCENT_DARK,
         },
         band: {
-          low: '#2F6E3B',
-          lowBg: '#E4F1E6',
-          medium: '#7A5C0E',
-          mediumBg: '#FBF0D6',
-          high: '#A32E2E',
-          highBg: '#F8E1E1',
-          noData: '#5A5F58',
-          noDataBg: '#ECEBE7',
+          low: BAND_COLORS.LOW,
+          lowBg: BAND_BG_COLORS.LOW,
+          medium: BAND_COLORS.MEDIUM,
+          mediumBg: BAND_BG_COLORS.MEDIUM,
+          high: BAND_COLORS.HIGH,
+          highBg: BAND_BG_COLORS.HIGH,
+          noData: BAND_COLORS.NO_DATA,
+          noDataBg: BAND_BG_COLORS.NO_DATA,
         },
       },
       // A single named scale, used consistently instead of ad hoc text-sm/

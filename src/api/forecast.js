@@ -1,7 +1,29 @@
-import { request } from './client.js';
+// No backend implements GET /api/forecast (see docs/BACKEND_GAPS.md). This
+// always serves bundled sample data - never a network call - so the
+// Forecast page stays usable. SampleDataNotice tells the user it isn't live.
+import forecastDefault from './__fixtures__/forecast.json';
+import forecastInsufficient from './__fixtures__/forecastInsufficient.json';
 
-export function getForecast({ lat, lng, sensorId }) {
-  return request('/api/forecast', {
-    params: { lat, lng, sensorId },
-  });
+const DOCKLANDS_LIBRARY = { lat: -37.8154, lng: 144.9505 };
+const COORD_EPSILON = 0.001;
+const FIXTURE_DELAY_MS = 250;
+
+function delay(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function near(lat, lng) {
+  return (
+    Math.abs(lat - DOCKLANDS_LIBRARY.lat) < COORD_EPSILON &&
+    Math.abs(lng - DOCKLANDS_LIBRARY.lng) < COORD_EPSILON
+  );
+}
+
+export async function getForecast({ lat, lng } = {}) {
+  await delay(FIXTURE_DELAY_MS);
+
+  if (lat != null && lng != null && near(lat, lng)) {
+    return forecastInsufficient;
+  }
+  return forecastDefault;
 }
