@@ -1,10 +1,12 @@
 {
   "sensorId": null,
   "sensorName": "Docklands Library",
+  "sensorDistanceMetres": null,
   "generatedAt": "2026-08-07T14:00:00+10:00",
   "windowMinutes": 60,
   "basis": "historical",
   "sufficientHistory": false,
+  "current": null,
   "timeline": [],
   "peakBand": null,
   "peakWindow": null

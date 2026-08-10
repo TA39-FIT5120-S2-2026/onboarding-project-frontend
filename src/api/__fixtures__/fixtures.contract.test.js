@@ -8,6 +8,7 @@ const MELBOURNE_CENTRAL = { latitude: -37.8103, longitude: 144.9628 };
 const BOURKE_STREET_MALL = { latitude: -37.8136, longitude: 144.9648 };
 const FLINDERS_STREET_STATION = { latitude: -37.8183, longitude: 144.9671 };
 const ST_KILDA_BEACH = { latitude: -37.8677, longitude: 144.9797 };
+const DOCKLANDS_LIBRARY = { latitude: -37.8154, longitude: 144.9505 };
 
 const PLAN_DATA_FIELDS = [
   'origin',
@@ -19,7 +20,6 @@ const PLAN_DATA_FIELDS = [
   'hasAcceptableRoute',
   'fallbackRouteId',
   'decision',
-  'alternativeComparison',
   'routes',
 ];
 
@@ -71,16 +71,19 @@ const REFUGE_FIELDS = ['id', 'name', 'category', 'address', 'walkingDistanceMetr
 const FORECAST_FIELDS = [
   'sensorId',
   'sensorName',
+  'sensorDistanceMetres',
   'generatedAt',
   'windowMinutes',
   'basis',
   'sufficientHistory',
+  'current',
   'timeline',
   'peakBand',
   'peakWindow',
 ];
 
 const TIMELINE_POINT_FIELDS = ['minutesAhead', 'predictedCount', 'band'];
+const CURRENT_FIELDS = ['pedestrianCount', 'band', 'timestamp', 'freshnessStatus'];
 
 const VALID_BANDS = ['LOW', 'MEDIUM', 'HIGH', 'NO_DATA'];
 
@@ -110,6 +113,11 @@ describe('route-plan fixture matches API_CONTRACT.md field names', () => {
 
     expect(data.routes.filter((r) => r.recommended).length).toBe(1);
     expect(data.hasAcceptableRoute).toBe(true);
+    if (data.decision.alternativeUsed) {
+      expect(data).toHaveProperty('alternativeComparison');
+    } else {
+      expect(data).not.toHaveProperty('alternativeComparison');
+    }
   });
 
   it('an out-of-CBD destination returns canPlanRoute: false, never a route list', () => {
@@ -123,11 +131,23 @@ describe('route-plan fixture matches API_CONTRACT.md field names', () => {
     expect(result.error.data.canPlanRoute).toBe(false);
   });
 
+  it('does not treat arbitrary Docklands coordinates as the Southern Cross exception', () => {
+    const result = resolveFixture('/api/routes/plan', {
+      origin: MELBOURNE_CENTRAL,
+      destination: DOCKLANDS_LIBRARY,
+      crowdTolerance: 'MEDIUM',
+    });
+    expect(result.error?.status).toBe(400);
+    expect(result.error?.data.canPlanRoute).toBe(false);
+  });
+
   it('a strict tolerance at a peak destination yields hasAcceptableRoute: false with every route not within tolerance', () => {
     const data = planRoute(MELBOURNE_CENTRAL, FLINDERS_STREET_STATION, 'LOW');
     expect(data.hasAcceptableRoute).toBe(false);
     expect(data.fallbackRouteId).not.toBeNull();
     data.routes.forEach((route) => expect(route.withinTolerance).toBe(false));
+    expect(data.routes.filter((route) => route.recommended)).toHaveLength(0);
+    expect(data.routes.filter((route) => route.fallback)).toHaveLength(1);
   });
 
   it('NO_DATA is never returned as LOW', () => {
@@ -156,6 +176,7 @@ describe('sample-data fixtures match API_CONTRACT.md field names', () => {
     expectFields(fixture, FORECAST_FIELDS);
     expect(fixture.basis).toBe('historical');
     fixture.timeline.forEach((point) => expectFields(point, TIMELINE_POINT_FIELDS));
+    if (fixture.current) expectFields(fixture.current, CURRENT_FIELDS);
   });
 
   it('forecastInsufficient.json follows the sufficientHistory: false rules', () => {

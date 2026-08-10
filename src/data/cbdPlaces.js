@@ -11,7 +11,11 @@
 // stays reachable from the combobox, not just from free text.
 
 import { GENERATED_CBD_PLACES } from './cbdPlaces.generated.js';
-import { COLLOQUIAL_PLACES, OUTSIDE_COVERAGE_PLACES } from '../../scripts/placeOverrides.js';
+import {
+  COLLOQUIAL_PLACES,
+  SUPPORTED_ACCESS_POINT_PLACES,
+  OUTSIDE_COVERAGE_PLACES,
+} from '../../scripts/placeOverrides.js';
 
 export const CBD_BBOX = {
   minLat: -37.8226,
@@ -20,7 +24,12 @@ export const CBD_BBOX = {
   maxLng: 144.9749,
 };
 
-export const CBD_PLACES = [...GENERATED_CBD_PLACES, ...COLLOQUIAL_PLACES, ...OUTSIDE_COVERAGE_PLACES];
+export const CBD_PLACES = [
+  ...GENERATED_CBD_PLACES,
+  ...COLLOQUIAL_PLACES,
+  ...SUPPORTED_ACCESS_POINT_PLACES,
+  ...OUTSIDE_COVERAGE_PLACES,
+];
 
 export function findPlace(id) {
   return CBD_PLACES.find((place) => place.id === id) ?? null;
