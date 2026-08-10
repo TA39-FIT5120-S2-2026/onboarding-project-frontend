@@ -17,7 +17,7 @@ import { BAND_COLORS } from '../utils/bandLabels.js';
 import { formatDistance, formatDuration } from '../utils/format.js';
 import { mergeSections } from '../utils/routeSections.js';
 
-const ATTRIBUTION = 'City of Melbourne, CC BY 4.0';
+const FALLBACK_SOURCE = 'City of Melbourne Open Data';
 const NAMED_SENSORS_SHOWN = 2;
 
 const MAP_LEGEND_ITEMS = [
@@ -183,7 +183,9 @@ export default function RouteDetail() {
               );
             })}
           </ul>
-          <p className="mt-3 text-micro text-ink/50">{route.exposure.dataSource ?? ATTRIBUTION}</p>
+          <p className="mt-3 text-micro text-ink/50">
+            {route.exposure.dataSource ?? FALLBACK_SOURCE}, CC BY 4.0
+          </p>
         </Card>
       </Section>
 

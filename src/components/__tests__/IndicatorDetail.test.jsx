@@ -6,7 +6,7 @@ import IndicatorDetail from '../IndicatorDetail.jsx';
 const lowExposure = {
   sensoryBand: 'LOW',
   averagePedestrianCount: 38,
-  dataSource: 'City of Melbourne, CC BY 4.0',
+  dataSource: 'City of Melbourne Open Data',
   sensors: [
     {
       locationId: 34,
@@ -21,7 +21,7 @@ const lowExposure = {
 const highExposureNoSensors = {
   sensoryBand: 'HIGH',
   averagePedestrianCount: 162,
-  dataSource: 'City of Melbourne, CC BY 4.0',
+  dataSource: 'City of Melbourne Open Data',
   sensors: [],
 };
 
@@ -37,7 +37,7 @@ describe('IndicatorDetail (AC 1.1.3)', () => {
 
     expect(trigger).toHaveAttribute('aria-expanded', 'true');
     expect(screen.getByText('Elizabeth St North')).toBeInTheDocument();
-    expect(screen.getByText('City of Melbourne, CC BY 4.0')).toBeInTheDocument();
+    expect(screen.getByText('City of Melbourne Open Data, CC BY 4.0')).toBeInTheDocument();
     expect(screen.getByText(/34 counts \/ min/)).toBeInTheDocument();
   });
 

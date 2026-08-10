@@ -52,6 +52,15 @@ worth fixing on the backend, for whoever picks it up next.
    sensor-count as a tiebreaker) would likely produce more trustworthy
    recommendations.
 
+   **This also means AC 1.2.2 and AC 1.3.3 are not literally satisfied.**
+   Both say "the route with the lowest pedestrian exposure is marked
+   Recommended" / "the lowest-exposure route available is displayed" - the
+   backend's actual pick is lowest-band-then-lowest-peak, not lowest-average.
+   The frontend cannot silently re-sort to match the AC's wording without
+   breaking the "bands and ranking come from the API" rule, so this is a
+   backend-vs-AC-copy conflict to resolve at the source, not something the
+   frontend can patch around.
+
 2. **`NO_DATA` radius is 50m, not the 200m originally specified.**
    `SENSOR_ROUTE_RADIUS_METERS` in the backend `.env` defaults to 50. One-line
    fix: set it to 200. No code change needed. Until then, a route section

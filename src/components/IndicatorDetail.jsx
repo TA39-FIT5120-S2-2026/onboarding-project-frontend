@@ -5,7 +5,11 @@ import BandIcon from './BandIcon.jsx';
 import Card from './ui/Card.jsx';
 import { formatCount, formatTime } from '../utils/format.js';
 
-const ATTRIBUTION = 'City of Melbourne, CC BY 4.0';
+const FALLBACK_SOURCE = 'City of Melbourne Open Data';
+// AC 1.1.3 requires the CC BY 4.0 licence attribution, not just a data
+// source name. The backend's `exposure.dataSource` field never includes it
+// (it's just "City of Melbourne Open Data"), so the licence is appended
+// here rather than only appearing in a fallback that live data never hits.
 
 // showCount hides the redundant average-count text when a caller (RouteCard)
 // already shows it via RouteExposureStats right below - otherwise the same
@@ -57,7 +61,9 @@ export default function IndicatorDetail({ routeId, exposure, showCount = true })
               ))}
             </ul>
           )}
-          <p className="mt-3 text-micro text-ink/50">{exposure.dataSource ?? ATTRIBUTION}</p>
+          <p className="mt-3 text-micro text-ink/50">
+            {exposure.dataSource ?? FALLBACK_SOURCE}, CC BY 4.0
+          </p>
         </Card>
       )}
     </div>

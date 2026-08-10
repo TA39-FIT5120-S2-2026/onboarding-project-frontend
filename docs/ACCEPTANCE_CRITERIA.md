@@ -517,7 +517,8 @@ assumes. Full detail in `docs/BACKEND_GAPS.md`.
 |---|---|
 | 1.1.1 Scenario 1, 3 | Live - `POST /api/routes/plan` |
 | 1.1.1 Scenario 2 (access points) | **Blocked** - no PTV data source in the backend |
-| 1.1.2, 1.1.3, 1.2.1, 1.2.2, 1.2.3, 1.3.1, 1.3.2, 1.3.3 | Live |
+| 1.1.2, 1.1.3, 1.2.1, 1.2.3, 1.3.1, 1.3.2 | Live |
+| 1.2.2, 1.3.3 | **Live, but not literally met** - both say "lowest pedestrian exposure"; the backend ranks by band then peak reading, not average, so the route it picks is not always the lowest-average one. See `docs/BACKEND_GAPS.md` |
 | 2.1.1, 2.1.2, 2.1.3 (Sensory Refuges) | **Sample data** - `GET /api/refuges` not implemented; frontend shows a visible "Sample data" notice |
 | 2.2.1, 2.2.2, 2.2.3 (Forecast) | **Sample data** - `GET /api/forecast` not implemented; frontend shows a visible "Sample data" notice |
 
