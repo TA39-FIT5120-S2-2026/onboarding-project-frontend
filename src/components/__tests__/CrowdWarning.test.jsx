@@ -2,40 +2,36 @@ import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import CrowdWarning from '../CrowdWarning.jsx';
 
-const highSegments = [
+const highSections = [
   {
-    streetName: 'Swanston St',
-    band: 'HIGH',
-    countPerMinute: 187,
-    sensorId: 34,
-    sensorName: 'Swanston St North',
+    sectionId: 1,
+    sensoryBand: 'HIGH',
+    sensors: [{ locationId: 34, name: 'Swanston St North' }],
   },
   {
-    streetName: 'Little Lonsdale St',
-    band: 'NO_DATA',
-    countPerMinute: null,
-    sensorId: null,
-    sensorName: null,
+    sectionId: 2,
+    sensoryBand: 'HIGH',
+    sensors: [],
   },
 ];
 
-const noHighSegments = [
-  { streetName: 'Elizabeth St', band: 'LOW', countPerMinute: 34 },
-  { streetName: 'La Trobe St', band: 'LOW', countPerMinute: 41 },
+const noHighSections = [
+  { sectionId: 1, sensoryBand: 'LOW', sensors: [{ locationId: 1, name: 'Elizabeth St' }] },
+  { sectionId: 2, sensoryBand: 'LOW', sensors: [{ locationId: 2, name: 'La Trobe St' }] },
 ];
 
 describe('CrowdWarning (AC 1.2.3)', () => {
   it('Scenario 2: names the affected street section and the data last-updated time', () => {
-    render(<CrowdWarning segments={highSegments} dataLastUpdated="2026-08-07T14:20:00+10:00" />);
+    render(<CrowdWarning sections={highSections} latestReadingAt="2026-08-07T14:20:00+10:00" />);
 
     const warning = screen.getByRole('alert');
-    expect(warning).toHaveTextContent('Swanston St');
+    expect(warning).toHaveTextContent('Swanston St North');
     expect(warning).toHaveTextContent(/last updated/i);
     expect(warning).toHaveTextContent('2:20 pm');
   });
 
   it('Scenario 3: shows no crowd warning when the route has no High-band section', () => {
-    render(<CrowdWarning segments={noHighSegments} dataLastUpdated="2026-08-07T14:20:00+10:00" />);
+    render(<CrowdWarning sections={noHighSections} latestReadingAt="2026-08-07T14:20:00+10:00" />);
 
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });

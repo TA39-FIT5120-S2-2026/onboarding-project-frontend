@@ -15,24 +15,24 @@ function toLatLngs(geometry) {
   return geometry.coordinates.map(([lng, lat]) => [lat, lng]);
 }
 
-function FitBounds({ segments }) {
+function FitBounds({ sections }) {
   const map = useMap();
 
   useEffect(() => {
-    const allPoints = segments.flatMap((segment) => toLatLngs(segment.geometry));
+    const allPoints = sections.flatMap((section) => toLatLngs(section.geometry));
     if (allPoints.length > 0) {
       map.fitBounds(allPoints, { padding: [24, 24], animate: false });
     }
-  }, [map, segments]);
+  }, [map, sections]);
 
   return null;
 }
 
-export default function RouteMap({ segments }) {
+export default function RouteMap({ sections }) {
   const center = useMemo(() => {
-    const points = segments.flatMap((segment) => toLatLngs(segment.geometry));
+    const points = sections.flatMap((section) => toLatLngs(section.geometry));
     return points[Math.floor(points.length / 2)] ?? [-37.8136, 144.9631];
-  }, [segments]);
+  }, [sections]);
 
   return (
     <div className="h-72 overflow-hidden rounded-xl border border-ink/10 md:h-96">
@@ -41,12 +41,12 @@ export default function RouteMap({ segments }) {
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
-        <FitBounds segments={segments} />
-        {segments.map((segment, index) => (
+        <FitBounds sections={sections} />
+        {sections.map((section) => (
           <Polyline
-            key={`${segment.streetName}-${index}`}
-            positions={toLatLngs(segment.geometry)}
-            pathOptions={BAND_LINE_STYLE[segment.band] ?? BAND_LINE_STYLE.NO_DATA}
+            key={section.sectionId}
+            positions={toLatLngs(section.geometry)}
+            pathOptions={BAND_LINE_STYLE[section.sensoryBand] ?? BAND_LINE_STYLE.NO_DATA}
           />
         ))}
       </MapContainer>

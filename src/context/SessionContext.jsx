@@ -5,11 +5,11 @@ const SessionContext = createContext(null);
 
 const INITIAL_STATE = {
   tolerance: DEFAULT_TOLERANCE,
-  lastSelectedRoute: null,
+  selectedRouteId: null,
   routes: [],
-  accessPoints: null,
-  toleranceApplied: DEFAULT_TOLERANCE,
-  noRouteMeetsTolerance: false,
+  decision: null,
+  alternativeComparison: null,
+  hasAcceptableRoute: true,
   origin: null,
   destination: null,
   checkInSeen: false,
@@ -22,25 +22,17 @@ export function SessionProvider({ children }) {
     () => ({
       session,
       setTolerance: (tolerance) => setSession((prev) => ({ ...prev, tolerance })),
-      setRouteSearchResult: ({
-        routes,
-        accessPoints,
-        toleranceApplied,
-        noRouteMeetsTolerance,
-        origin,
-        destination,
-      }) =>
+      setPlan: (planData, { origin, destination } = {}) =>
         setSession((prev) => ({
           ...prev,
-          routes,
-          accessPoints,
-          toleranceApplied,
-          noRouteMeetsTolerance,
+          routes: planData.routes,
+          decision: planData.decision,
+          alternativeComparison: planData.alternativeComparison ?? null,
+          hasAcceptableRoute: planData.hasAcceptableRoute,
           origin: origin ?? prev.origin,
           destination: destination ?? prev.destination,
         })),
-      setLastSelectedRoute: (route) =>
-        setSession((prev) => ({ ...prev, lastSelectedRoute: route })),
+      setSelectedRouteId: (routeId) => setSession((prev) => ({ ...prev, selectedRouteId: routeId })),
       setCheckInSeen: (seen) => setSession((prev) => ({ ...prev, checkInSeen: seen })),
       resetSession: () => setSession(INITIAL_STATE),
     }),

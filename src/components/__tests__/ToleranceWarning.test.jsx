@@ -17,7 +17,7 @@ function renderApp() {
         <Routes>
           <Route path="/" element={<RoutePlanner />} />
           <Route path="/routes" element={<RouteResults />} />
-          <Route path="/routes/:id" element={<RouteDetail />} />
+          <Route path="/routes/:routeId" element={<RouteDetail />} />
         </Routes>
       </MemoryRouter>
     </SessionProvider>,
@@ -41,11 +41,15 @@ describe('ToleranceWarning (AC 1.3.2)', () => {
     const user = userEvent.setup();
     renderApp();
 
-    // r3 (index 2) is HIGH, which exceeds the default MEDIUM tolerance.
+    // r3 (index 2) is HIGH, which exceeds the default MEDIUM tolerance. It
+    // also has a HIGH-band section, so CrowdWarning (AC 1.2.3) legitimately
+    // renders its own alert alongside ToleranceWarning here - find the
+    // tolerance one specifically.
     await planAndSelectRoute(user, 2);
 
-    const warning = screen.getByRole('alert');
-    expect(warning).toHaveTextContent(/busier than your usual limit/i);
+    const alerts = screen.getAllByRole('alert');
+    const warning = alerts.find((el) => /busier than your usual limit/i.test(el.textContent));
+    expect(warning).toBeDefined();
     expect(warning).toHaveTextContent(/9 min/);
 
     const switchButton = screen.getByRole('button', { name: /use this route instead/i });
@@ -53,7 +57,11 @@ describe('ToleranceWarning (AC 1.3.2)', () => {
 
     await user.click(switchButton);
 
-    await waitFor(() => expect(screen.queryByRole('alert')).not.toBeInTheDocument());
+    await waitFor(() =>
+      expect(
+        screen.queryAllByRole('alert').some((el) => /busier than your usual limit/i.test(el.textContent)),
+      ).toBe(false),
+    );
   });
 
   it('shows no tolerance warning when the route is within tolerance', async () => {

@@ -16,8 +16,8 @@ export default function ToleranceWarning({ route, tolerance, alternative, onSwit
       title="Busier than your usual limit"
       actions={alternative && <AlternativeRouteCard route={alternative} onSwitch={onSwitch} />}
     >
-      Your selected route ({formatDuration(route.walkingTimeMinutes)} ·{' '}
-      {formatDistance(route.distanceMetres)}) is busier than your selected tolerance (
+      Your selected route ({formatDuration(route.duration.minutes)} ·{' '}
+      {formatDistance(route.distance.meters)}) is busier than your selected tolerance (
       {bandLabel(tolerance).text}).
     </Callout>
   );

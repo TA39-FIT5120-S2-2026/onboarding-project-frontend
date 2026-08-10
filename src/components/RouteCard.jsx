@@ -6,7 +6,7 @@ import Stat from './ui/Stat.jsx';
 import Button from './ui/Button.jsx';
 import { formatDistance, formatDuration } from '../utils/format.js';
 
-export default function RouteCard({ route, onSelect }) {
+export default function RouteCard({ route, reason, onSelect }) {
   return (
     <Card highlighted={route.recommended} className="flex h-full flex-col">
       {route.recommended && (
@@ -17,19 +17,15 @@ export default function RouteCard({ route, onSelect }) {
 
       <Stat
         icon={Footprints}
-        value={formatDuration(route.walkingTimeMinutes)}
-        label={formatDistance(route.distanceMetres)}
+        value={formatDuration(route.duration.minutes)}
+        label={formatDistance(route.distance.meters)}
       />
 
       <div className="mt-3">
-        <IndicatorDetail
-          routeId={route.id}
-          band={route.band}
-          countPerMinute={route.averageCountPerMinute}
-        />
+        <IndicatorDetail routeId={route.routeId} exposure={route.exposure} />
       </div>
 
-      {route.reason && <p className="mt-3 text-caption text-ink/70">{route.reason}</p>}
+      {reason && <p className="mt-3 text-caption text-ink/70">{reason}</p>}
 
       {onSelect && (
         <Button

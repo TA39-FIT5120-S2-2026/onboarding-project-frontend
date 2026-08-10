@@ -8,6 +8,7 @@ import RefugeIcon from '../components/RefugeIcon.jsx';
 import RefugeDetail from '../components/RefugeDetail.jsx';
 import RefugeFilter from '../components/RefugeFilter.jsx';
 import LocationPinIcon from '../components/LocationPinIcon.jsx';
+import SampleDataNotice from '../components/SampleDataNotice.jsx';
 import PageHeader from '../components/ui/PageHeader.jsx';
 import Card from '../components/ui/Card.jsx';
 import Button from '../components/ui/Button.jsx';
@@ -49,7 +50,7 @@ export default function SensoryRefuges() {
     if (!location) return;
     let cancelled = false;
     setIsLoading(true);
-    getRefuges({ lat: location.lat, lng: location.lng, types: selectedTypes }).then((result) => {
+    getRefuges({ types: selectedTypes }).then((result) => {
       if (cancelled) return;
       setRefuges(result.refuges);
       setSearchRadiusMetres(result.searchRadiusMetres);
@@ -66,7 +67,7 @@ export default function SensoryRefuges() {
   useEffect(() => {
     if (!location) return;
     let cancelled = false;
-    getRefuges({ lat: location.lat, lng: location.lng }).then((result) => {
+    getRefuges().then((result) => {
       if (cancelled) return;
       const counts = result.refuges.reduce((acc, refuge) => {
         acc[refuge.category] = (acc[refuge.category] ?? 0) + 1;
@@ -101,6 +102,9 @@ export default function SensoryRefuges() {
           title="Sensory Refuges"
           description="Choose a location to find nearby parks, libraries and quiet spaces."
         />
+        <div className="mb-4">
+          <SampleDataNotice />
+        </div>
         <Card>
           <form onSubmit={handleLocationSubmit} className="space-y-4" noValidate>
             <PlaceCombobox
@@ -123,12 +127,16 @@ export default function SensoryRefuges() {
     <div className="mx-auto max-w-5xl">
       <PageHeader title="Sensory Refuges" eyebrow={`Near ${location.name}`} />
 
+      <div className="mb-4">
+        <SampleDataNotice id="refuges-sample-notice" />
+      </div>
+
       <RefugeFilter selected={selectedTypes} onChange={setSelectedTypes} counts={categoryCounts} />
 
       {isLoading && <p className="mt-5 text-caption text-ink/60">Finding nearby refuges…</p>}
 
       {!isLoading && refuges.length === 0 && (
-        <Card className="mt-5 text-center">
+        <Card className="mt-5 text-center" aria-describedby="refuges-sample-notice">
           <SearchX className="mx-auto h-8 w-8 text-ink/30" aria-hidden="true" />
           <p className="mt-3 font-semibold text-ink">
             No refuges of the selected types were found nearby.

@@ -2,7 +2,7 @@ export const BAND_LABELS = {
   LOW: { text: 'Low', description: 'Under 50 people per minute', icon: 'circle' },
   MEDIUM: { text: 'Medium', description: '50 to 149 people per minute', icon: 'triangle' },
   HIGH: { text: 'High', description: '150 or more people per minute', icon: 'square' },
-  NO_DATA: { text: 'No sensor data', description: 'No sensor within 200 metres', icon: 'dash' },
+  NO_DATA: { text: 'No sensor data', description: 'No sensor within 50 metres', icon: 'dash' },
 };
 
 export const BAND_ORDER = ['LOW', 'MEDIUM', 'HIGH'];

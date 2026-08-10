@@ -7,8 +7,11 @@ export default function AlternativeRouteCard({ route, onSwitch }) {
     <div className="rounded-lg bg-white p-3">
       <p className="text-caption font-semibold text-ink">Try this route instead</p>
       <div className="mt-1.5 flex flex-wrap items-center gap-2">
-        <span className="font-semibold text-ink">{formatDuration(route.walkingTimeMinutes)}</span>
-        <SensoryIndicator band={route.band} countPerMinute={route.averageCountPerMinute} />
+        <span className="font-semibold text-ink">{formatDuration(route.duration.minutes)}</span>
+        <SensoryIndicator
+          band={route.exposure.sensoryBand}
+          countPerMinute={route.exposure.averagePedestrianCount}
+        />
       </div>
       <Button type="button" onClick={() => onSwitch(route)} fullWidth className="mt-3">
         Use this route instead

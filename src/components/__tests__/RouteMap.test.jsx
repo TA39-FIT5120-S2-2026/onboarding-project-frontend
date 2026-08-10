@@ -7,10 +7,10 @@ import { BAND_COLORS } from '../../utils/bandLabels.js';
 // react-leaflet is mocked globally in src/test/setup.jsx - jsdom cannot run
 // Leaflet's real SVG renderer. The mock still passes pathOptions through,
 // so this test can verify each band actually gets a distinct style.
-const segments = [
+const sections = [
   {
-    streetName: 'Swanston St',
-    band: 'HIGH',
+    sectionId: 1,
+    sensoryBand: 'HIGH',
     geometry: {
       type: 'LineString',
       coordinates: [
@@ -20,8 +20,8 @@ const segments = [
     },
   },
   {
-    streetName: 'Elizabeth St',
-    band: 'LOW',
+    sectionId: 2,
+    sensoryBand: 'LOW',
     geometry: {
       type: 'LineString',
       coordinates: [
@@ -33,8 +33,8 @@ const segments = [
 ];
 
 describe('RouteMap (AC 1.2.3 Scenario 1)', () => {
-  it('draws the High segment with a different colour and line pattern than the rest of the route', () => {
-    render(<RouteMap segments={segments} />);
+  it('draws the High section with a different colour and line pattern than the rest of the route', () => {
+    render(<RouteMap sections={sections} />);
 
     const lines = screen.getAllByRole('img', { name: /route line/i });
     expect(lines).toHaveLength(2);

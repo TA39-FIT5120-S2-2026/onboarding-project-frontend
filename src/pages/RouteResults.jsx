@@ -2,26 +2,27 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MapPinOff } from 'lucide-react';
 import { useSession } from '../context/SessionContext.jsx';
-import AccessPointCard from '../components/AccessPointCard.jsx';
 import RouteComparisonList from '../components/RouteComparisonList.jsx';
 import BandLegend from '../components/BandLegend.jsx';
 import CheckInModal from '../components/CheckInModal.jsx';
+import Callout from '../components/ui/Callout.jsx';
 import PageHeader from '../components/ui/PageHeader.jsx';
 import Card from '../components/ui/Card.jsx';
 import Button from '../components/ui/Button.jsx';
-import { getRoutes } from '../api/routes.js';
+import { planRoute } from '../api/routes.js';
+import { userMessageFor } from '../api/errors.js';
 
 export default function RouteResults() {
   const navigate = useNavigate();
-  const { session, setTolerance, setRouteSearchResult, setLastSelectedRoute, setCheckInSeen } =
-    useSession();
-  const { routes, accessPoints } = session;
+  const { session, setTolerance, setPlan, setSelectedRouteId, setCheckInSeen } = useSession();
+  const { routes } = session;
   const [pendingRoute, setPendingRoute] = useState(null);
   const [isReevaluating, setIsReevaluating] = useState(false);
+  const [reevaluateError, setReevaluateError] = useState(null);
 
   function goToRouteDetail(route) {
-    setLastSelectedRoute(route);
-    navigate(`/routes/${route.id}`);
+    setSelectedRouteId(route.routeId);
+    navigate(`/routes/${route.routeId}`);
   }
 
   function handleSelectRoute(route) {
@@ -34,21 +35,18 @@ export default function RouteResults() {
 
   async function handleCheckInSelect(tolerance) {
     setIsReevaluating(true);
+    setReevaluateError(null);
     try {
-      const result = await getRoutes({
+      const result = await planRoute({
         origin: session.origin,
         destination: session.destination,
-        tolerance,
+        crowdTolerance: tolerance,
       });
       setTolerance(tolerance);
-      setRouteSearchResult({
-        routes: result.routes,
-        accessPoints: result.accessPoints,
-        toleranceApplied: result.toleranceApplied,
-        noRouteMeetsTolerance: result.noRouteMeetsTolerance,
-      });
-    } catch {
+      setPlan(result);
+    } catch (error) {
       setTolerance(tolerance);
+      setReevaluateError(userMessageFor(error));
     } finally {
       setIsReevaluating(false);
       setCheckInSeen(true);
@@ -89,18 +87,16 @@ export default function RouteResults() {
         description="Compare your options - the calmest route is highlighted first."
       />
 
-      {accessPoints && (
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-          <AccessPointCard label="Nearest stop at origin" accessPoint={accessPoints.origin} />
-          <AccessPointCard
-            label="Nearest stop at destination"
-            accessPoint={accessPoints.destination}
-          />
+      {reevaluateError && (
+        <div className="mt-4">
+          <Callout tone="alert" role="alert">
+            {reevaluateError}
+          </Callout>
         </div>
       )}
 
       <div className="mt-5">
-        <RouteComparisonList routes={routes} onSelectRoute={handleSelectRoute} />
+        <RouteComparisonList routes={routes} decision={session.decision} onSelectRoute={handleSelectRoute} />
       </div>
 
       <div className="mt-5">

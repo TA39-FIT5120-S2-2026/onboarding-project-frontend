@@ -9,26 +9,29 @@ import Card from '../components/ui/Card.jsx';
 import Button from '../components/ui/Button.jsx';
 import Section from '../components/ui/Section.jsx';
 import Callout from '../components/ui/Callout.jsx';
-import { findPlaceByName, isWithinCbd } from '../data/cbdPlaces.js';
-import { getRoutes } from '../api/routes.js';
+import { findPlaceByName } from '../data/cbdPlaces.js';
+import { planRoute } from '../api/routes.js';
 import { getForecast } from '../api/forecast.js';
 import { ApiError } from '../api/client.js';
+import { userMessageFor } from '../api/errors.js';
 import { useSession } from '../context/SessionContext.jsx';
 
 const UNRECOGNISED_MESSAGE = 'Enter a location from the suggestions, like Flinders Street Station.';
 
 export default function RoutePlanner() {
   const navigate = useNavigate();
-  const { session, setRouteSearchResult } = useSession();
+  const { session, setPlan } = useSession();
   const [originText, setOriginText] = useState('');
   const [destinationText, setDestinationText] = useState('');
   const [errors, setErrors] = useState({ origin: null, destination: null, general: null });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [predictiveAlert, setPredictiveAlert] = useState(null);
 
+  const selectedRoute = session.routes.find((r) => r.routeId === session.selectedRouteId) ?? null;
+
   useEffect(() => {
-    const { lastSelectedRoute, destination } = session;
-    if (!lastSelectedRoute || !destination) {
+    const { destination } = session;
+    if (!selectedRoute || !destination) {
       setPredictiveAlert(null);
       return;
     }
@@ -46,7 +49,7 @@ export default function RoutePlanner() {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session.lastSelectedRoute, session.destination]);
+  }, [selectedRoute, session.destination]);
 
   async function handleSubmit(event) {
     event.preventDefault();
@@ -67,26 +70,18 @@ export default function RoutePlanner() {
     setIsSubmitting(true);
 
     try {
-      const result = await getRoutes({ origin, destination, tolerance: session.tolerance });
-      setRouteSearchResult({
-        routes: result.routes,
-        accessPoints: result.accessPoints,
-        toleranceApplied: result.toleranceApplied,
-        noRouteMeetsTolerance: result.noRouteMeetsTolerance,
-        origin,
-        destination,
-      });
+      const result = await planRoute({ origin, destination, crowdTolerance: session.tolerance });
+      setPlan(result, { origin, destination });
       navigate('/routes');
     } catch (error) {
-      if (error instanceof ApiError && error.code === 'OUT_OF_BOUNDS') {
-        const originOutside = !isWithinCbd(origin.lat, origin.lng);
+      if (error instanceof ApiError && error.data?.canPlanRoute === false) {
         setErrors({
-          origin: originOutside ? error.message : null,
-          destination: originOutside ? null : error.message,
+          origin: error.data.originInsideCbd === false ? error.message : null,
+          destination: error.data.destinationInsideCbd === false ? error.message : null,
           general: null,
         });
       } else if (error instanceof ApiError) {
-        setErrors({ origin: null, destination: null, general: error.message });
+        setErrors({ origin: null, destination: null, general: userMessageFor(error) });
       } else {
         setErrors({
           origin: null,

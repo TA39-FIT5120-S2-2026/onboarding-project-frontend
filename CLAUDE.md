@@ -17,7 +17,8 @@ React context for session state. No Redux.
 
 ## Bands
 LOW under 50 · MEDIUM 50-149 · HIGH 150+ counts per minute
-NO_DATA when a route section has no sensor within 200m.
+NO_DATA when a route section has no sensor within 50m (backend
+SENSOR_ROUTE_RADIUS_METERS - see docs/BACKEND_GAPS.md).
 Never render NO_DATA as LOW.
 
 ## Working method

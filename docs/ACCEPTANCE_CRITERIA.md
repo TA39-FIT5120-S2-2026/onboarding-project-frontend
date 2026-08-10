@@ -50,7 +50,7 @@ If a reviewer cannot click through and mark it pass or fail, it is not an accept
 | LOW | under 50 counts per minute |
 | MEDIUM | 50 to 149 |
 | HIGH | 150 and above |
-| NO_DATA | no sensor within 200m of that segment |
+| NO_DATA | no sensor within 50m of that segment (backend `SENSOR_ROUTE_RADIUS_METERS`; see `docs/BACKEND_GAPS.md`) |
 
 Source: Crowd Density Classification, tech mentor's Sample Data Management Plan.
 `NO_DATA` is never rendered as `LOW`.
@@ -507,10 +507,25 @@ These are implementation decisions, not acceptance criteria. They are recorded h
 
 ---
 
+## Implementation status against the current backend
+
+Not a change to the ACs above - this file remains authoritative. Recorded
+here because the backend delivered does not implement every endpoint an AC
+assumes. Full detail in `docs/BACKEND_GAPS.md`.
+
+| AC | Status |
+|---|---|
+| 1.1.1 Scenario 1, 3 | Live - `POST /api/routes/plan` |
+| 1.1.1 Scenario 2 (access points) | **Blocked** - no PTV data source in the backend |
+| 1.1.2, 1.1.3, 1.2.1, 1.2.2, 1.2.3, 1.3.1, 1.3.2, 1.3.3 | Live |
+| 2.1.1, 2.1.2, 2.1.3 (Sensory Refuges) | **Sample data** - `GET /api/refuges` not implemented; frontend shows a visible "Sample data" notice |
+| 2.2.1, 2.2.2, 2.2.3 (Forecast) | **Sample data** - `GET /api/forecast` not implemented; frontend shows a visible "Sample data" notice |
+
 ## Related documents
 
 | File | Purpose |
 |---|---|
 | `API_CONTRACT.md` | Endpoint shapes and field names. Identical in both repos |
+| `BACKEND_GAPS.md` | Deviations between this file's assumptions and the backend as built |
 | `DATA_MODEL.md` | Database schema and queries (backend only) |
 | `ACCESSIBILITY.md` | WCAG AA requirements (frontend only) |
