@@ -17,7 +17,7 @@ import { buildTripQuery, parseTripQuery } from '../utils/tripQuery.js';
 export default function RouteResults() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { session, setTolerance, setPlan, setSelectedRouteId, setCheckInSeen } = useSession();
+  const { session, setTolerance, setPlan, setSelectedRouteId } = useSession();
   const { routes } = session;
   const [pendingRoute, setPendingRoute] = useState(null);
   const [isReevaluating, setIsReevaluating] = useState(false);
@@ -61,10 +61,6 @@ export default function RouteResults() {
   }
 
   function handleSelectRoute(route) {
-    if (session.checkInSeen) {
-      goToRouteDetail(route);
-      return;
-    }
     setPendingRoute(route);
   }
 
@@ -87,7 +83,6 @@ export default function RouteResults() {
       setReevaluateError(userMessageFor(error));
     } finally {
       setIsReevaluating(false);
-      setCheckInSeen(true);
       const route = pendingRoute;
       setPendingRoute(null);
       if (route) goToRouteDetail(route);
@@ -95,7 +90,6 @@ export default function RouteResults() {
   }
 
   function handleCheckInSkip() {
-    setCheckInSeen(true);
     const route = pendingRoute;
     setPendingRoute(null);
     if (route) goToRouteDetail(route);

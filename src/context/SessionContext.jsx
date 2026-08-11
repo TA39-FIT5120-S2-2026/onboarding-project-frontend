@@ -12,7 +12,6 @@ const INITIAL_STATE = {
   hasAcceptableRoute: true,
   origin: null,
   destination: null,
-  checkInSeen: false,
 };
 
 export function SessionProvider({ children }) {
@@ -33,7 +32,6 @@ export function SessionProvider({ children }) {
           destination: destination ?? prev.destination,
         })),
       setSelectedRouteId: (routeId) => setSession((prev) => ({ ...prev, selectedRouteId: routeId })),
-      setCheckInSeen: (seen) => setSession((prev) => ({ ...prev, checkInSeen: seen })),
       resetSession: () => setSession(INITIAL_STATE),
     }),
     [session],
