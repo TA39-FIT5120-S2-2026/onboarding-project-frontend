@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, ChevronDown, Footprints, Info, MapPinOff } from 'lucide-react';
+import { useRouteExposureRefresh } from '../hooks/useRouteExposureRefresh.jsx';
 import { useSession } from '../context/SessionContext.jsx';
 import SensoryIndicator from '../components/SensoryIndicator.jsx';
 import ToleranceWarning from '../components/ToleranceWarning.jsx';
@@ -28,7 +29,15 @@ const MAP_LEGEND_ITEMS = [
   { label: 'Medium', lineStyle: { color: BAND_COLORS.MEDIUM, pattern: 'dashed' } },
   { label: 'High (busier than usual)', lineStyle: { color: BAND_COLORS.HIGH, pattern: 'dotted' } },
   { label: 'No sensor data', lineStyle: { color: BAND_COLORS.NO_DATA, pattern: 'dashed' } },
-  { label: 'Start', icon: <span aria-hidden="true" className="inline-block h-3 w-3 flex-shrink-0 rounded-full border-2 border-white bg-accent shadow" /> },
+  {
+    label: 'Start',
+    icon: (
+      <span
+        aria-hidden="true"
+        className="inline-block h-3 w-3 flex-shrink-0 rounded-full border-2 border-white bg-accent shadow"
+      />
+    ),
+  },
   {
     label: 'Destination',
     icon: (
@@ -59,6 +68,8 @@ export default function RouteDetail() {
   const [showDirections, setShowDirections] = useState(false);
   const [isReplanning, setIsReplanning] = useState(false);
   const [wasReplanned, setWasReplanned] = useState(false);
+
+  useRouteExposureRefresh();
 
   // Session state is in-memory only (no localStorage/sessionStorage - see
   // CLAUDE.md), so a refresh clears it. If the trip is still encoded in the
@@ -119,7 +130,7 @@ export default function RouteDetail() {
           {backLink}
           <h1 className="text-display-sm text-ink">Route Detail</h1>
           <Card className="mt-4 animate-pulse text-center">
-            <p className="text-caption text-ink/60">Getting your trip back…</p>
+            <p className="text-caption text-ink/60">Getting your trip back</p>
           </Card>
         </div>
       );
@@ -161,7 +172,7 @@ export default function RouteDetail() {
         title="Route Detail"
         eyebrow={
           session.origin && session.destination
-            ? `${session.origin.name} → ${session.destination.name}`
+            ? `${session.origin.name} -> ${session.destination.name}`
             : undefined
         }
       />
@@ -169,8 +180,8 @@ export default function RouteDetail() {
       {wasReplanned && (
         <div className="mb-4">
           <Callout tone="info" role="status">
-            We replanned this trip after your session refreshed. This may not be exactly the
-            route you had before.
+            We replanned this trip after your session refreshed. This may not be exactly the route
+            you had before.
           </Callout>
         </div>
       )}
@@ -214,7 +225,10 @@ export default function RouteDetail() {
       )}
 
       <div className="mt-4">
-        <CrowdWarning sections={route.congestedSections} latestReadingAt={route.exposure.latestReadingAt} />
+        <CrowdWarning
+          sections={route.congestedSections}
+          latestReadingAt={route.exposure.latestReadingAt}
+        />
       </div>
 
       <Section title="Route map">
@@ -224,7 +238,11 @@ export default function RouteDetail() {
           below.
         </p>
         <div className="grid grid-cols-1 gap-3 md:grid-cols-[1fr,minmax(220px,auto)]">
-          <RouteMap sections={route.routeSections} origin={session.origin} destination={session.destination} />
+          <RouteMap
+            sections={route.routeSections}
+            origin={session.origin}
+            destination={session.destination}
+          />
           <MapLegend items={MAP_LEGEND_ITEMS} />
         </div>
       </Section>
@@ -241,7 +259,8 @@ export default function RouteDetail() {
                 >
                   <div className="min-w-0 flex-1">
                     <p className="text-micro font-semibold uppercase tracking-wide text-ink/50">
-                      Stretch {index + 1} of {stretches.length} · {formatDistance(stretch.distanceMeters)}
+                      Stretch {index + 1} of {stretches.length} ·{' '}
+                      {formatDistance(stretch.distanceMeters)}
                     </p>
                     {typeof label === 'string' ? (
                       <p className="mt-0.5 break-words text-caption text-ink/70">{label}</p>
@@ -258,7 +277,11 @@ export default function RouteDetail() {
                       </ul>
                     )}
                   </div>
-                  <SensoryIndicator band={stretch.sensoryBand} countPerMinute={null} showCount={false} />
+                  <SensoryIndicator
+                    band={stretch.sensoryBand}
+                    countPerMinute={null}
+                    showCount={false}
+                  />
                 </li>
               );
             })}

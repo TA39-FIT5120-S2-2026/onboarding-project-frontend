@@ -24,3 +24,13 @@ export function validateRoute({ origin, destination }) {
     },
   });
 }
+
+export function refreshRouteExposures({ routes, crowdTolerance }) {
+  return request('/api/routes/refresh', {
+    method: 'POST',
+    body: {
+      routes,
+      crowdTolerance,
+    },
+  });
+}
