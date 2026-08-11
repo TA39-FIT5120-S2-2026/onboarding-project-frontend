@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { MapPinOff } from 'lucide-react';
+import { useRouteExposureRefresh } from '../hooks/useRouteExposureRefresh.jsx';
 import { useSession } from '../context/SessionContext.jsx';
 import RouteComparisonList from '../components/RouteComparisonList.jsx';
 import BandLegend from '../components/BandLegend.jsx';
@@ -100,13 +101,15 @@ export default function RouteResults() {
     if (route) goToRouteDetail(route);
   }
 
+  useRouteExposureRefresh();
+
   if (!routes.length) {
     if (isReplanning) {
       return (
         <div className="mx-auto max-w-md">
           <PageHeader title="Route Results" />
           <Card className="animate-pulse text-center">
-            <p className="text-caption text-ink/60">Getting your trip back…</p>
+            <p className="text-caption text-ink/60">Getting your trip back</p>
           </Card>
         </div>
       );
