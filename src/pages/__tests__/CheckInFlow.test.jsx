@@ -65,7 +65,7 @@ describe('Check-in to Route Detail flow (AC 1.3.1)', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
-  it('does not show the check-in again once it has been seen this session', async () => {
+  it('shows the check-in again on every route selection this session', async () => {
     const user = userEvent.setup();
     renderApp();
     await planAndReachResults(user);
@@ -79,7 +79,8 @@ describe('Check-in to Route Detail flow (AC 1.3.1)', () => {
     await planAndReachResults(user);
 
     await user.click(screen.getAllByRole('button', { name: /select this route/i })[0]);
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(screen.getByRole('dialog', { name: /how are you feeling/i })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Skip' }));
     await waitFor(() => expect(screen.getByText('Route Detail')).toBeInTheDocument());
   });
 });

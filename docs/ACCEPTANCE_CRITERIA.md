@@ -240,6 +240,13 @@ The agreed sensory factor for this iteration is **pedestrian volume only**. Cons
 >
 > then the default sensitivity level is retained and the user continues to the selected route unchanged.
 
+**Scenario 3: Check-in shown on every selection**
+> Given a user has already completed or dismissed the check-in once this session,
+>
+> when the user selects a route again (including after going back, reselecting, or a page refresh),
+>
+> then the check-in is displayed again - it is never skipped based on a prior answer.
+
 **Data source:** N/A (user input, not stored beyond the session)
 **DoD link:** Epic 1 - "Route recommendations dynamically adjust when crowd levels exceed user-defined limits"
 
