@@ -33,15 +33,26 @@ export async function request(path, { method = 'GET', body } = {}) {
     headers: body ? { 'Content-Type': 'application/json' } : undefined,
     body: body ? JSON.stringify(body) : undefined,
   });
-  const payload = await response.json();
+  let payload;
 
-  if (!response.ok || payload.success === false) {
+  try {
+    payload = await response.json();
+  } catch {
     throw new ApiError(
-      payload.message ?? 'Something went wrong.',
+      response.ok
+        ? 'The server returned an invalid response.'
+        : 'Something went wrong.',
       response.status,
-      payload.data ?? null,
     );
   }
 
-  return payload.data;
+  if (!response.ok || payload?.success === false) {
+    throw new ApiError(
+      payload?.message ?? 'Something went wrong.',
+      response.status,
+      payload?.data ?? null,
+    );
+  }
+
+  return payload?.data;
 }

@@ -172,7 +172,7 @@ export default function RouteDetail() {
         title="Route Detail"
         eyebrow={
           session.origin && session.destination
-            ? `${session.origin.name} -> ${session.destination.name}`
+            ? `${session.origin.name} → ${session.destination.name}`
             : undefined
         }
       />

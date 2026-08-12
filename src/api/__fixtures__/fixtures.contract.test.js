@@ -160,6 +160,32 @@ describe('route-plan fixture matches API_CONTRACT.md field names', () => {
   });
 });
 
+describe('route-refresh fixture matches the backend refresh contract', () => {
+  it('re-evaluates existing route data without requesting a new route plan', () => {
+    const plan = planRoute(MELBOURNE_CENTRAL, BOURKE_STREET_MALL, 'MEDIUM');
+    const result = resolveFixture('/api/routes/refresh', {
+      routes: plan.routes,
+      crowdTolerance: 'LOW',
+    });
+
+    expect(result.error).toBeUndefined();
+    expect(result.data.routeCount).toBe(plan.routes.length);
+    expect(result.data.crowdTolerance).toBe('LOW');
+    expect(result.data.routes.map((route) => route.geometry)).toEqual(
+      plan.routes.map((route) => route.geometry),
+    );
+  });
+
+  it('rejects an empty route list', () => {
+    const result = resolveFixture('/api/routes/refresh', {
+      routes: [],
+      crowdTolerance: 'MEDIUM',
+    });
+
+    expect(result.error?.status).toBe(400);
+  });
+});
+
 describe('sample-data fixtures match API_CONTRACT.md field names', () => {
   it('refuges.json has contract fields', () => {
     refuges.refuges.forEach((refuge) => expectFields(refuge, REFUGE_FIELDS));

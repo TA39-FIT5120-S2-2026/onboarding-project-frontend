@@ -1,4 +1,4 @@
-import { createContext, useContext, useMemo, useState } from 'react';
+import { createContext, useCallback, useContext, useMemo, useState } from 'react';
 import { DEFAULT_TOLERANCE } from '../utils/tolerance.js';
 
 const SessionContext = createContext(null);
@@ -12,29 +12,47 @@ const INITIAL_STATE = {
   hasAcceptableRoute: true,
   origin: null,
   destination: null,
+  checkInSeen: false,
 };
 
 export function SessionProvider({ children }) {
   const [session, setSession] = useState(INITIAL_STATE);
 
+  const setTolerance = useCallback(
+    (tolerance) => setSession((prev) => ({ ...prev, tolerance })),
+    [],
+  );
+  const setPlan = useCallback((planData, { origin, destination } = {}) => {
+    setSession((prev) => ({
+      ...prev,
+      routes: planData.routes,
+      decision: planData.decision,
+      alternativeComparison: planData.alternativeComparison ?? null,
+      hasAcceptableRoute: planData.hasAcceptableRoute,
+      origin: origin ?? prev.origin,
+      destination: destination ?? prev.destination,
+    }));
+  }, []);
+  const setSelectedRouteId = useCallback(
+    (routeId) => setSession((prev) => ({ ...prev, selectedRouteId: routeId })),
+    [],
+  );
+  const setCheckInSeen = useCallback(
+    (seen) => setSession((prev) => ({ ...prev, checkInSeen: seen })),
+    [],
+  );
+  const resetSession = useCallback(() => setSession(INITIAL_STATE), []);
+
   const value = useMemo(
     () => ({
       session,
-      setTolerance: (tolerance) => setSession((prev) => ({ ...prev, tolerance })),
-      setPlan: (planData, { origin, destination } = {}) =>
-        setSession((prev) => ({
-          ...prev,
-          routes: planData.routes,
-          decision: planData.decision,
-          alternativeComparison: planData.alternativeComparison ?? null,
-          hasAcceptableRoute: planData.hasAcceptableRoute,
-          origin: origin ?? prev.origin,
-          destination: destination ?? prev.destination,
-        })),
-      setSelectedRouteId: (routeId) => setSession((prev) => ({ ...prev, selectedRouteId: routeId })),
-      resetSession: () => setSession(INITIAL_STATE),
+      setTolerance,
+      setPlan,
+      setSelectedRouteId,
+      setCheckInSeen,
+      resetSession,
     }),
-    [session],
+    [session, setTolerance, setPlan, setSelectedRouteId, setCheckInSeen, resetSession],
   );
 
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;

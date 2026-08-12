@@ -55,9 +55,9 @@ export default function RouteResults() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [routes.length, searchParams]);
 
-  function goToRouteDetail(route) {
+  function goToRouteDetail(route, querySession = session) {
     setSelectedRouteId(route.routeId);
-    navigate(`/routes/${route.routeId}${buildTripQuery(session)}`);
+    navigate(`/routes/${route.routeId}${buildTripQuery(querySession)}`);
   }
 
   function handleSelectRoute(route) {
@@ -75,17 +75,15 @@ export default function RouteResults() {
       });
       setTolerance(tolerance);
       setPlan(result);
-      navigate(`/routes${buildTripQuery({ ...session, tolerance })}`, {
-        replace: true,
-      });
+      const route = pendingRoute;
+      setPendingRoute(null);
+      if (route) {
+        goToRouteDetail(route, { ...session, tolerance });
+      }
     } catch (error) {
-      setTolerance(tolerance);
       setReevaluateError(userMessageFor(error));
     } finally {
       setIsReevaluating(false);
-      const route = pendingRoute;
-      setPendingRoute(null);
-      if (route) goToRouteDetail(route);
     }
   }
 
