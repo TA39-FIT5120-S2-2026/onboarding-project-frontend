@@ -1,12 +1,18 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter, Routes, Route } from 'react-router-dom';
+import { MemoryRouter, Routes, Route, useLocation } from 'react-router-dom';
 import RoutePlanner from '../RoutePlanner.jsx';
 import RouteResults from '../RouteResults.jsx';
 import RouteDetail from '../RouteDetail.jsx';
 import NavBar from '../../components/layout/NavBar.jsx';
 import { SessionProvider } from '../../context/SessionContext.jsx';
+import * as routesApi from '../../api/routes.js';
+
+function LocationProbe() {
+  const location = useLocation();
+  return <output data-testid="location">{`${location.pathname}${location.search}`}</output>;
+}
 
 function renderApp() {
   return render(
@@ -16,6 +22,7 @@ function renderApp() {
         future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
       >
         <NavBar />
+        <LocationProbe />
         <Routes>
           <Route path="/" element={<RoutePlanner />} />
           <Route path="/routes" element={<RouteResults />} />
@@ -48,6 +55,24 @@ describe('Check-in to Route Detail flow (AC 1.3.1)', () => {
 
     await waitFor(() => expect(screen.getByText('Route Detail')).toBeInTheDocument());
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(screen.getByTestId('location')).toHaveTextContent('tol=LOW');
+  });
+
+  it('keeps the check-in open and the existing plan unchanged when re-evaluation fails', async () => {
+    const user = userEvent.setup();
+    renderApp();
+    await planAndReachResults(user);
+
+    await user.click(screen.getAllByRole('button', { name: /select this route/i })[0]);
+    vi.spyOn(routesApi, 'planRoute').mockRejectedValueOnce(new Error('Unable to re-evaluate'));
+    await user.click(screen.getByRole('button', { name: 'Very sensitive today' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Unable to re-evaluate');
+    expect(screen.getByText('Route Results')).toBeInTheDocument();
+    expect(screen.getByRole('dialog', { name: /how are you feeling/i })).toBeInTheDocument();
+    expect(screen.getByTestId('location')).not.toHaveTextContent('/routes/1');
+
+    vi.restoreAllMocks();
   });
 
   it('Scenario 2: dismissing the check-in keeps the default tolerance and continues unchanged', async () => {

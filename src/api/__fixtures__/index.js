@@ -331,6 +331,35 @@ function handlePlanRoute(body) {
   };
 }
 
+function handleRefreshRoutes(body) {
+  const { routes, crowdTolerance } = body ?? {};
+
+  if (!Array.isArray(routes) || routes.length === 0) {
+    return { error: { status: 400, message: 'Routes must be provided as a non-empty array.' } };
+  }
+
+  const tolerance = crowdTolerance ?? 'MEDIUM';
+  const evaluated = evaluateTolerance(
+    routes,
+    tolerance,
+    crowdTolerance == null ? 'DEFAULT' : 'USER',
+  );
+
+  return {
+    data: {
+      routeCount: evaluated.routes.length,
+      recommendedRouteId: evaluated.recommendedRouteId,
+      crowdTolerance: tolerance,
+      acceptableRouteCount: evaluated.acceptableRouteCount,
+      hasAcceptableRoute: evaluated.hasAcceptableRoute,
+      fallbackRouteId: evaluated.fallbackRouteId,
+      decision: evaluated.decision,
+      alternativeComparison: evaluated.alternativeComparison,
+      routes: evaluated.routes,
+    },
+  };
+}
+
 function handleRefuges(url) {
   const types = (url.searchParams.get('types') ?? '').split(',').filter(Boolean);
   const filtered = types.length
@@ -364,6 +393,7 @@ export function resolveFixture(path, body) {
   const url = new URL(path, 'http://fixture.local');
 
   if (url.pathname === '/api/routes/plan') return handlePlanRoute(body);
+  if (url.pathname === '/api/routes/refresh') return handleRefreshRoutes(body);
   if (url.pathname === '/api/refuges') return handleRefuges(url);
   if (url.pathname === '/api/forecast') return handleForecast(url);
 

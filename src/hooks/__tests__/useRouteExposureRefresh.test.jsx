@@ -1,14 +1,13 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, cleanup } from '@testing-library/react';
+import { act, render, screen, cleanup } from '@testing-library/react';
 import { useEffect } from 'react';
 import { SessionProvider, useSession } from '../../context/SessionContext.jsx';
 import { useRouteExposureRefresh } from '../useRouteExposureRefresh.jsx';
+import { refreshRouteExposures } from '../../api/routes.js';
 
 vi.mock('../../api/routes.js', () => ({
   refreshRouteExposures: vi.fn(),
 }));
-
-const { refreshRouteExposures } = await import('../../api/routes.js');
 
 const exampleRoute = {
   routeId: 1,
@@ -78,17 +77,17 @@ describe('useRouteExposureRefresh', () => {
     );
 
     expect(refreshRouteExposures).not.toHaveBeenCalled();
+    expect(screen.getByText('1')).toBeInTheDocument();
 
-    await vi.runOnlyPendingTimersAsync();
+    await act(async () => {
+      window.dispatchEvent(new Event('focus'));
+    });
     expect(refreshRouteExposures).toHaveBeenCalledTimes(1);
 
-    window.dispatchEvent(new Event('focus'));
-    await vi.runOnlyPendingTimersAsync();
+    await act(async () => {
+      vi.advanceTimersByTime(15 * 60 * 1000);
+    });
     expect(refreshRouteExposures).toHaveBeenCalledTimes(2);
-
-    vi.advanceTimersByTime(15 * 60 * 1000);
-    await vi.runOnlyPendingTimersAsync();
-    expect(refreshRouteExposures).toHaveBeenCalledTimes(3);
   });
 
   it('cleans up its interval and focus listener on unmount', () => {
