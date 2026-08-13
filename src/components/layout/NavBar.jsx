@@ -56,7 +56,7 @@ export default function NavBar() {
       <div className="hidden md:sticky md:top-0 md:flex md:h-screen md:w-60 md:flex-col md:border-r md:border-ink/10 md:p-4">
         <div className="mb-6 flex items-center gap-2 px-1">
           <Compass className="h-6 w-6 text-accent" aria-hidden="true" />
-          <span className="text-heading-sm text-ink">Quiet Compass</span>
+          <span className="text-heading-sm text-ink">Quite Compass</span>
         </div>
         <div className="flex flex-col gap-1">
           {LINKS.map((link) => (

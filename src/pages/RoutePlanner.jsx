@@ -112,7 +112,7 @@ export default function RoutePlanner() {
 
       <div className="grid grid-cols-1 gap-8 md:grid-cols-[1.1fr,1fr] md:items-start">
         <div>
-          <h1 className="text-display-sm text-ink">Quiet Compass</h1>
+          <h1 className="text-display-sm text-ink">Quite Compass</h1>
           <p className="mt-2 max-w-prose text-body text-ink/70">
             Walk Melbourne&apos;s CBD by crowd level, not just distance. We compare your route
             options using real pedestrian counts and show how busy each one is.
